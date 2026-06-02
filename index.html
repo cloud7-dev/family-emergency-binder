@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Family Emergency Binder</title>
+    <meta
+      name="description"
+      content="A local-first encrypted emergency binder for family documents, medical information, insurance, contacts, and recovery hints."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">FEB</div>
+          <div>
+            <strong data-i18n="appName">Family Emergency Binder</strong>
+            <span data-i18n="tagline">Local-first encrypted vault</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Sections">
+          <button class="nav-item active" data-section="vault" data-i18n="navVault">Vault</button>
+          <button class="nav-item" data-section="documents" data-i18n="navDocuments">Documents</button>
+          <button class="nav-item" data-section="medical" data-i18n="navMedical">Medical</button>
+          <button class="nav-item" data-section="insurance" data-i18n="navInsurance">Insurance</button>
+          <button class="nav-item" data-section="contacts" data-i18n="navContacts">Contacts</button>
+          <button class="nav-item" data-section="recovery" data-i18n="navRecovery">Recovery Hints</button>
+          <button class="nav-item" data-section="exports" data-i18n="navExports">Exports</button>
+          <button class="nav-item" data-section="settings" data-i18n="navSettings">Settings</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span data-i18n="localOnly">Local only. No upload.</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1 data-i18n="screenTitle">Emergency binder vault</h1>
+            <p data-i18n="screenSubtitle">
+              Organize critical household references without sending them to a server.
+            </p>
+          </div>
+          <div class="topbar-actions">
+            <label class="field compact">
+              <span data-i18n="language">Language</span>
+              <select id="languageSelect" aria-label="Language"></select>
+            </label>
+            <button id="lockButton" class="button secondary" type="button" data-i18n="lock">Lock</button>
+          </div>
+        </header>
+
+        <section class="notice" id="cryptoNotice">
+          <strong data-i18n="securityStatus">Security status</strong>
+          <span data-i18n="securityCopy">
+            Vault data is encrypted in this browser with PBKDF2 and AES-GCM before export or local save.
+          </span>
+        </section>
+
+        <div class="content-grid">
+          <section class="panel vault-panel">
+            <div class="panel-header">
+              <div>
+                <h2 data-i18n="vaultSetup">Vault setup</h2>
+                <p data-i18n="vaultSetupCopy">Create or unlock a local encrypted vault.</p>
+              </div>
+              <span id="vaultStateBadge" class="badge warning" data-i18n="locked">Locked</span>
+            </div>
+
+            <form id="vaultForm" class="form-grid">
+              <label class="field">
+                <span data-i18n="familyName">Family or household name</span>
+                <input id="familyName" name="familyName" autocomplete="off" placeholder="Kim family" />
+              </label>
+              <label class="field">
+                <span data-i18n="passphrase">Master passphrase</span>
+                <input
+                  id="passphrase"
+                  name="passphrase"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Use a long phrase"
+                  required
+                />
+              </label>
+              <div class="button-row">
+                <button class="button primary" type="submit" data-i18n="createUnlock">
+                  Create or unlock vault
+                </button>
+                <button id="seedDemoButton" class="button secondary" type="button" data-i18n="loadDemo">
+                  Load demo data
+                </button>
+                <label class="button secondary file-button">
+                  <span data-i18n="importVault">Import vault</span>
+                  <input id="importVaultInput" type="file" accept=".json,.emergencyvault,application/json" />
+                </label>
+              </div>
+            </form>
+
+            <div class="readiness">
+              <div class="readiness-header">
+                <span data-i18n="readiness">Readiness</span>
+                <strong id="readinessScore">0%</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <div id="progressFill" class="progress-fill"></div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel security-panel">
+            <div class="panel-header">
+              <div>
+                <h2 data-i18n="privacyControls">Privacy controls</h2>
+                <p data-i18n="privacyCopy">Default to hints and redacted exports.</p>
+              </div>
+            </div>
+            <ul class="check-list">
+              <li><span class="check-icon">✓</span><span data-i18n="controlNoServer">No server upload</span></li>
+              <li><span class="check-icon">✓</span><span data-i18n="controlEncrypted">Encrypted vault export</span></li>
+              <li><span class="check-icon">✓</span><span data-i18n="controlRedaction">Redacted emergency packet</span></li>
+              <li><span class="check-icon">✓</span><span data-i18n="controlI18n">Eight-language UI plan</span></li>
+            </ul>
+          </aside>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 data-i18n="checklistTitle">Preparedness checklist</h2>
+              <p data-i18n="checklistCopy">Track what is complete, missing, stale, or needs review.</p>
+            </div>
+          </div>
+          <div id="checklist" class="checklist-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 data-i18n="recordsTitle">Vault records</h2>
+              <p data-i18n="recordsCopy">Store references, locations, contacts, and recovery hints.</p>
+            </div>
+          </div>
+
+          <form id="recordForm" class="record-form">
+            <label class="field">
+              <span data-i18n="category">Category</span>
+              <select id="recordCategory"></select>
+            </label>
+            <label class="field">
+              <span data-i18n="title">Title</span>
+              <input id="recordTitle" autocomplete="off" placeholder="Health insurance card" />
+            </label>
+            <label class="field wide">
+              <span data-i18n="detail">Location or hint</span>
+              <input id="recordDetail" autocomplete="off" placeholder="Fireproof box, folder A" />
+            </label>
+            <label class="field">
+              <span data-i18n="sensitivity">Sensitivity</span>
+              <select id="recordSensitivity">
+                <option value="safe" data-i18n="safeToPrint">Safe to print</option>
+                <option value="trusted" data-i18n="trustedFamily">Trusted family</option>
+                <option value="secret" data-i18n="fullVaultOnly">Full vault only</option>
+              </select>
+            </label>
+            <button class="button primary" type="submit" data-i18n="addRecord">Add record</button>
+          </form>
+
+          <div id="recordList" class="record-list" aria-live="polite"></div>
+        </section>
+
+        <section class="panel export-panel">
+          <div class="panel-header">
+            <div>
+              <h2 data-i18n="exportTitle">Export</h2>
+              <p data-i18n="exportCopy">Download an encrypted vault or preview a redacted emergency packet.</p>
+            </div>
+            <div class="button-row">
+              <button id="saveVaultButton" class="button secondary" type="button" data-i18n="saveLocal">
+                Save encrypted locally
+              </button>
+              <button id="downloadPacketButton" class="button secondary" type="button" data-i18n="downloadPacket">
+                Download packet
+              </button>
+              <button id="downloadRecoveryButton" class="button secondary" type="button" data-i18n="downloadRecovery">
+                Recovery sheet
+              </button>
+              <button id="printPacketButton" class="button secondary" type="button" data-i18n="printPacket">
+                Print packet
+              </button>
+              <button id="downloadVaultButton" class="button primary" type="button" data-i18n="downloadVault">
+                Download vault
+              </button>
+            </div>
+          </div>
+          <div id="exportPreview" class="export-preview"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="recordTemplate">
+      <article class="record-card">
+        <div>
+          <span class="record-category"></span>
+          <h3></h3>
+          <p></p>
+        </div>
+        <span class="record-sensitivity"></span>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

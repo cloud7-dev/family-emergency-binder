@@ -1,0 +1,21 @@
+{
+  "name": "family-emergency-binder",
+  "version": "0.1.0",
+  "private": false,
+  "description": "A local-first encrypted emergency binder for families.",
+  "type": "commonjs",
+  "scripts": {
+    "serve": "python3 -m http.server 8765",
+    "test": "node --check app.js && node scripts/static-check.js",
+    "qa:browser": "node scripts/qa-headless.js"
+  },
+  "keywords": [
+    "emergency-binder",
+    "family-emergency-binder",
+    "local-first",
+    "privacy-first",
+    "encrypted-vault",
+    "pwa"
+  ],
+  "license": "Apache-2.0"
+}

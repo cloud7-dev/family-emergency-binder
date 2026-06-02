@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Family Emergency Binder">
+  <rect width="64" height="64" rx="12" fill="#0f766e"/>
+  <path d="M32 10l18 7v12c0 12.5-7.2 20.8-18 25-10.8-4.2-18-12.5-18-25V17l18-7z" fill="#ffffff" opacity=".96"/>
+  <path d="M25 22h14v4H25v-4zm0 8h14v4H25v-4zm0 8h9v4h-9v-4z" fill="#0f766e"/>
+</svg>

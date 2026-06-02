@@ -1,0 +1,9 @@
+{
+  "name": "Family Emergency Binder",
+  "short_name": "Emergency Binder",
+  "description": "A local-first encrypted emergency binder for families.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e"
+}
