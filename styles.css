@@ -413,9 +413,14 @@ button:focus-visible {
 
 .record-form {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1fr) minmax(220px, 1.5fr) minmax(150px, 0.8fr) auto;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(180px, 0.9fr) minmax(220px, 1.2fr) minmax(150px, 0.7fr) minmax(190px, 0.9fr) auto;
   gap: 10px;
   align-items: end;
+}
+
+.form-hint {
+  margin-top: 10px;
+  font-size: 13px;
 }
 
 .record-list {
@@ -437,6 +442,27 @@ button:focus-visible {
 .record-card p {
   margin-top: 4px;
   font-size: 14px;
+}
+
+.attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .record-category {
@@ -480,6 +506,19 @@ button:focus-visible {
   .export-panel {
     box-shadow: none;
     border: 0;
+  }
+
+  .export-panel .panel-header {
+    display: none;
+  }
+
+  .export-preview {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    color: #111;
+    font-size: 12pt;
   }
 }
 

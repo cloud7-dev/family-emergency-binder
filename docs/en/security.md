@@ -8,6 +8,7 @@ Early MVP caveats:
 - It has not received a security audit.
 - Users should not enter real secrets until the cryptography, storage, and export paths are reviewed.
 - Raw passwords, private keys, seed phrases, and full ID numbers should be discouraged by default.
+- Attachments are encrypted inside the vault, but scans and files often contain more sensitive data than text hints. Prefer small, redacted files and keep independent backups.
 
 Planned review areas:
 
@@ -16,4 +17,5 @@ Planned review areas:
 - Export redaction.
 - Clipboard and logging behavior.
 - XSS hardening.
-- Attachment encryption.
+- Attachment restore and deletion paths.
+- Backup-before-migrate import flow.

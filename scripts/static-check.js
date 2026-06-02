@@ -12,8 +12,14 @@ const requiredStrings = [
   "downloadPacket",
   "downloadRecovery",
   "printPacket",
+  "attachmentLimits",
+  "migratedVault",
   "PBKDF2-SHA256-250000",
   "AES-GCM-256",
+  "vaultSchemaVersion = 2",
+  "migrateVaultSchema",
+  "maxAttachmentBytes = 5 * 1024 * 1024",
+  "maxTotalAttachmentBytes = 20 * 1024 * 1024",
 ];
 const requiredFiles = ["index.html", "styles.css", "app.js", "sw.js", "manifest.webmanifest", "README.md", "LICENSE"];
 
@@ -33,8 +39,20 @@ for (const value of requiredStrings) {
   if (!app.includes(value)) failures.push(`Missing app string ${value}`);
 }
 
-for (const id of ["importVaultInput", "downloadPacketButton", "downloadRecoveryButton", "printPacketButton"]) {
+for (const id of [
+  "importVaultInput",
+  "downloadPacketButton",
+  "downloadRecoveryButton",
+  "printPacketButton",
+  "recordAttachment",
+]) {
   if (!html.includes(id)) failures.push(`Missing HTML control ${id}`);
+}
+
+for (const attachmentType of ["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]) {
+  if (!app.includes(attachmentType) || !html.includes(attachmentType)) {
+    failures.push(`Missing attachment type ${attachmentType}`);
+  }
 }
 
 if (!manifest.name || manifest.display !== "standalone") {

@@ -170,8 +170,15 @@
                 <option value="secret" data-i18n="fullVaultOnly">Full vault only</option>
               </select>
             </label>
+            <label class="field wide">
+              <span data-i18n="attachments">Attachments</span>
+              <input id="recordAttachment" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf,image/png,image/jpeg,image/webp,text/plain" />
+            </label>
             <button class="button primary" type="submit" data-i18n="addRecord">Add record</button>
           </form>
+          <p class="form-hint" data-i18n="attachmentLimits">
+            Attachments are encrypted inside the vault. Limit: 5MB per file, 20MB total.
+          </p>
 
           <div id="recordList" class="record-list" aria-live="polite"></div>
         </section>

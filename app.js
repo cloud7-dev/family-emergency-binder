@@ -66,6 +66,15 @@ const translations = {
     downloadPacket: "Download packet",
     downloadRecovery: "Recovery sheet",
     printPacket: "Print packet",
+    attachments: "Attachments",
+    attachmentLimits: "Attachments are encrypted inside the vault. Limit: 5MB per file, 20MB total.",
+    attachmentSummary: "Attachment",
+    attachmentHidden: "attachment data redacted",
+    fileTooLarge: "File is too large. Limit is 5MB per file.",
+    vaultTooLarge: "Vault attachments are too large. Limit is 20MB total.",
+    unsupportedFile: "Unsupported file type. Use PDF, PNG, JPG, WebP, or TXT.",
+    invalidVault: "This does not look like a Family Emergency Binder vault.",
+    migratedVault: "Imported older vault schema and upgraded it in memory.",
     packetDownloaded: "Redacted emergency packet downloaded.",
     recoveryDownloaded: "Recovery worksheet downloaded.",
     emptyRecords: "Unlock a vault and add the first emergency record.",
@@ -148,6 +157,15 @@ const translations = {
     downloadPacket: "패킷 다운로드",
     downloadRecovery: "복구 안내서",
     printPacket: "패킷 인쇄",
+    attachments: "첨부파일",
+    attachmentLimits: "첨부파일은 vault 안에 암호화됩니다. 제한: 파일당 5MB, 전체 20MB.",
+    attachmentSummary: "첨부",
+    attachmentHidden: "첨부 원문 가림",
+    fileTooLarge: "파일이 너무 큽니다. 파일당 5MB까지 가능합니다.",
+    vaultTooLarge: "vault 첨부파일이 너무 큽니다. 전체 20MB까지 가능합니다.",
+    unsupportedFile: "지원하지 않는 파일 형식입니다. PDF, PNG, JPG, WebP, TXT를 사용하세요.",
+    invalidVault: "Family Emergency Binder vault 형식이 아닙니다.",
+    migratedVault: "이전 vault schema를 가져와 메모리에서 업그레이드했습니다.",
     packetDownloaded: "가려진 비상 패킷을 다운로드했습니다.",
     recoveryDownloaded: "복구 안내서를 다운로드했습니다.",
     emptyRecords: "vault를 열고 첫 비상 기록을 추가하세요.",
@@ -589,6 +607,11 @@ const checklistKeys = [
 const statuses = ["missing", "review", "stale", "complete"];
 const storageKey = "family-emergency-binder.encryptedVault";
 const languageKey = "family-emergency-binder.language";
+const vaultSchemaVersion = 2;
+const maxAttachmentBytes = 5 * 1024 * 1024;
+const maxTotalAttachmentBytes = 20 * 1024 * 1024;
+const allowedAttachmentTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]);
+const allowedAttachmentExtensions = new Set(["pdf", "png", "jpg", "jpeg", "webp", "txt"]);
 
 let currentLanguage = localStorage.getItem(languageKey) || "ko";
 let vault = null;
@@ -610,6 +633,7 @@ const els = {
   recordCategory: document.querySelector("#recordCategory"),
   recordTitle: document.querySelector("#recordTitle"),
   recordDetail: document.querySelector("#recordDetail"),
+  recordAttachment: document.querySelector("#recordAttachment"),
   recordSensitivity: document.querySelector("#recordSensitivity"),
   recordList: document.querySelector("#recordList"),
   exportPreview: document.querySelector("#exportPreview"),
@@ -665,10 +689,11 @@ function renderCategoryOptions() {
 
 function defaultVault(familyName = "") {
   return {
-    version: 1,
+    version: vaultSchemaVersion,
     familyName,
     checklist: Object.fromEntries(checklistKeys.map((key) => [key, "missing"])),
     records: [],
+    attachments: [],
     backup: {
       lastSavedAt: null,
       lastDownloadedAt: null,
@@ -679,8 +704,9 @@ function defaultVault(familyName = "") {
 }
 
 function demoVault() {
+  const demoAttachmentId = crypto.randomUUID();
   return {
-    version: 1,
+    version: vaultSchemaVersion,
     familyName: els.familyName.value || "Kim family",
     checklist: {
       checklistDocuments: "complete",
@@ -703,6 +729,7 @@ function demoVault() {
         title: "Primary hospital and allergies",
         detail: "Seoul Central Hospital. Penicillin allergy. Medication list in kitchen drawer.",
         sensitivity: "safe",
+        attachmentIds: [demoAttachmentId],
       },
       {
         id: crypto.randomUUID(),
@@ -717,6 +744,18 @@ function demoVault() {
         title: "Password manager recovery hint",
         detail: "Hardware key is in the small black case. Do not store seed phrases here.",
         sensitivity: "secret",
+        attachmentIds: [],
+      },
+    ],
+    attachments: [
+      {
+        id: demoAttachmentId,
+        name: "demo-medical-note.txt",
+        type: "text/plain",
+        size: 51,
+        createdAt: new Date().toISOString(),
+        redaction: "safe",
+        dataBase64: textToBase64("Demo allergy note. Replace this with a real scan later."),
       },
     ],
     backup: {
@@ -726,6 +765,54 @@ function demoVault() {
     },
     updatedAt: new Date().toISOString(),
   };
+}
+
+function migrateVaultSchema(input) {
+  if (!input || typeof input !== "object" || !Array.isArray(input.records)) {
+    throw new Error("Invalid vault schema");
+  }
+  const migrated = {
+    version: vaultSchemaVersion,
+    familyName: input.familyName || "",
+    checklist: { ...Object.fromEntries(checklistKeys.map((key) => [key, "missing"])), ...(input.checklist || {}) },
+    records: input.records.map((record) => ({
+      id: record.id || crypto.randomUUID(),
+      category: categoryKeys.includes(record.category) ? record.category : "documents",
+      title: record.title || "Untitled",
+      detail: record.detail || "",
+      sensitivity: ["safe", "trusted", "secret"].includes(record.sensitivity) ? record.sensitivity : "trusted",
+      attachmentIds: Array.isArray(record.attachmentIds) ? record.attachmentIds : [],
+    })),
+    attachments: Array.isArray(input.attachments) ? input.attachments.filter(isValidAttachment) : [],
+    backup: {
+      lastSavedAt: input.backup?.lastSavedAt || null,
+      lastDownloadedAt: input.backup?.lastDownloadedAt || null,
+      lastRecoveryTestAt: input.backup?.lastRecoveryTestAt || null,
+    },
+    updatedAt: input.updatedAt || new Date().toISOString(),
+  };
+  const attachmentIds = new Set(migrated.attachments.map((attachment) => attachment.id));
+  migrated.records = migrated.records.map((record) => ({
+    ...record,
+    attachmentIds: record.attachmentIds.filter((id) => attachmentIds.has(id)),
+  }));
+  if (migrated.attachments.reduce((total, attachment) => total + attachment.size, 0) > maxTotalAttachmentBytes) {
+    throw new Error(t("vaultTooLarge"));
+  }
+  return migrated;
+}
+
+function isValidAttachment(attachment) {
+  return (
+    attachment &&
+    typeof attachment.id === "string" &&
+    typeof attachment.name === "string" &&
+    typeof attachment.type === "string" &&
+    typeof attachment.size === "number" &&
+    typeof attachment.createdAt === "string" &&
+    ["safe", "trusted", "secret"].includes(attachment.redaction) &&
+    typeof attachment.dataBase64 === "string"
+  );
 }
 
 function renderChecklist() {
@@ -785,6 +872,18 @@ function renderRecords() {
         : record.sensitivity === "trusted"
           ? t("trustedFamily")
           : t("fullVaultOnly");
+    const attachments = getRecordAttachments(record);
+    if (attachments.length) {
+      const list = document.createElement("div");
+      list.className = "attachment-list";
+      attachments.forEach((attachment) => {
+        const chip = document.createElement("span");
+        chip.className = "attachment-chip";
+        chip.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
+        list.append(chip);
+      });
+      card.querySelector("div").append(list);
+    }
     els.recordList.append(card);
   });
 }
@@ -794,7 +893,7 @@ function renderExportPreview() {
 }
 
 function setVaultUnlocked(nextVault) {
-  vault = nextVault;
+  vault = migrateVaultSchema(nextVault);
   isUnlocked = true;
   els.familyName.value = vault.familyName || "";
   renderVaultState();
@@ -833,14 +932,16 @@ async function deriveKey(passphrase, salt) {
 }
 
 async function encryptVault(data, passphrase) {
+  const normalized = migrateVaultSchema(data);
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
-  const plaintext = new TextEncoder().encode(JSON.stringify(data));
+  const plaintext = new TextEncoder().encode(JSON.stringify(normalized));
   const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
   return {
     app: "family-emergency-binder",
-    version: 1,
+    version: vaultSchemaVersion,
+    schemaVersion: vaultSchemaVersion,
     kdf: "PBKDF2-SHA256-250000",
     cipher: "AES-GCM-256",
     salt: toBase64(salt),
@@ -850,26 +951,88 @@ async function encryptVault(data, passphrase) {
 }
 
 async function decryptVault(envelope, passphrase) {
+  if (!envelope || envelope.app !== "family-emergency-binder" || !envelope.salt || !envelope.iv || !envelope.ciphertext) {
+    throw new Error(t("invalidVault"));
+  }
   const salt = fromBase64(envelope.salt);
   const iv = fromBase64(envelope.iv);
   const ciphertext = fromBase64(envelope.ciphertext);
   const key = await deriveKey(passphrase, salt);
   const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-  return JSON.parse(new TextDecoder().decode(plaintext));
+  return migrateVaultSchema(JSON.parse(new TextDecoder().decode(plaintext)));
 }
 
 function toBase64(bytes) {
-  return btoa(String.fromCharCode(...bytes));
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
 }
 
 function fromBase64(value) {
   return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
 }
 
+function textToBase64(value) {
+  return toBase64(new TextEncoder().encode(value));
+}
+
+function getRecordAttachments(record) {
+  const ids = new Set(record.attachmentIds || []);
+  return (vault?.attachments || []).filter((attachment) => ids.has(attachment.id));
+}
+
+function getTotalAttachmentBytes(attachments = vault?.attachments || []) {
+  return attachments.reduce((total, attachment) => total + (attachment.size || 0), 0);
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isAllowedAttachmentFile(file) {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  return allowedAttachmentTypes.has(file.type) || allowedAttachmentExtensions.has(extension);
+}
+
+async function fileToAttachment(file, redaction, projectedTotalBefore = getTotalAttachmentBytes()) {
+  if (!isAllowedAttachmentFile(file)) throw new Error(t("unsupportedFile"));
+  if (file.size > maxAttachmentBytes) throw new Error(t("fileTooLarge"));
+  const projectedTotal = projectedTotalBefore + file.size;
+  if (projectedTotal > maxTotalAttachmentBytes) throw new Error(t("vaultTooLarge"));
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  return {
+    id: crypto.randomUUID(),
+    name: file.name,
+    type: file.type || "application/octet-stream",
+    size: file.size,
+    createdAt: new Date().toISOString(),
+    redaction,
+    dataBase64: toBase64(bytes),
+  };
+}
+
+async function readSelectedAttachments(redaction) {
+  const files = Array.from(els.recordAttachment.files || []);
+  const attachments = [];
+  let projectedTotal = getTotalAttachmentBytes();
+  for (const file of files) {
+    const attachment = await fileToAttachment(file, redaction, projectedTotal);
+    attachments.push(attachment);
+    projectedTotal += attachment.size;
+  }
+  return attachments;
+}
+
 async function saveEncrypted() {
   if (!vault || !activePassphrase) return;
   vault.updatedAt = new Date().toISOString();
   vault.backup = { ...(vault.backup || {}), lastSavedAt: new Date().toISOString() };
+  vault = migrateVaultSchema(vault);
   const encrypted = await encryptVault(vault, activePassphrase);
   localStorage.setItem(storageKey, JSON.stringify(encrypted));
   toast(t("saved"));
@@ -879,6 +1042,7 @@ async function downloadEncrypted() {
   if (!vault || !activePassphrase) return;
   vault.updatedAt = new Date().toISOString();
   vault.backup = { ...(vault.backup || {}), lastDownloadedAt: new Date().toISOString() };
+  vault = migrateVaultSchema(vault);
   const encrypted = await encryptVault(vault, activePassphrase);
   const safeName = (vault.familyName || "family").toLowerCase().replace(/[^a-z0-9]+/g, "-");
   downloadTextFile(`${safeName}.emergencyvault.json`, JSON.stringify(encrypted, null, 2), "application/json");
@@ -890,16 +1054,26 @@ async function importEncryptedVault(file) {
     toast(t("importNeedsPassphrase"));
     return;
   }
+  let envelope;
   try {
-    const envelope = JSON.parse(await file.text());
+    envelope = JSON.parse(await file.text());
+    if (!envelope || envelope.app !== "family-emergency-binder") throw new Error(t("invalidVault"));
+  } catch (error) {
+    console.warn(error);
+    toast(t("invalidVault"));
+    return;
+  }
+  try {
+    const importedSchemaVersion = envelope.schemaVersion || envelope.version || 1;
     const decrypted = await decryptVault(envelope, els.passphrase.value);
     activePassphrase = els.passphrase.value;
     setVaultUnlocked(decrypted);
     localStorage.setItem(storageKey, JSON.stringify(envelope));
-    toast(t("importReady"));
+    toast(importedSchemaVersion < vaultSchemaVersion ? `${t("migratedVault")}\n${t("importReady")}` : t("importReady"));
   } catch (error) {
     console.warn(error);
-    toast(t("wrongPassphrase"));
+    const knownImportMessages = new Set([t("invalidVault"), t("vaultTooLarge")]);
+    toast(knownImportMessages.has(error.message) ? error.message : t("wrongPassphrase"));
   }
 }
 
@@ -910,7 +1084,15 @@ function buildEmergencyPacket() {
     `${t("emergencyPacket")}: ${vault.familyName || t("appName")}`,
     `Updated: ${formatDate(vault.updatedAt)}`,
     "",
-    ...printable.map((record) => `- ${t(record.category)}: ${record.title}\n  ${record.detail}`),
+    ...printable.map((record) => {
+      const attachments = getRecordAttachments(record);
+      const attachmentLines = attachments.length
+        ? `\n  ${t("attachmentSummary")}: ${attachments
+            .map((attachment) => `${attachment.name} (${formatBytes(attachment.size)}, ${t("attachmentHidden")})`)
+            .join("; ")}`
+        : "";
+      return `- ${t(record.category)}: ${record.title}\n  ${record.detail}${attachmentLines}`;
+    }),
   ];
   return lines.join("\n");
 }
@@ -929,9 +1111,14 @@ function buildRecoveryWorksheet() {
     "",
     "Before opening, verify with:",
     "",
+    "Last backup/test dates:",
+    "",
     `Last vault update: ${formatDate(vault?.updatedAt)}`,
     `Last local save: ${formatDate(vault?.backup?.lastSavedAt)}`,
     `Last vault download: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
+    `Last recovery test: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
+    "",
+    `Attachment metadata count: ${(vault?.attachments || []).length}`,
   ].join("\n");
 }
 
@@ -1000,24 +1187,33 @@ els.seedDemoButton.addEventListener("click", () => {
   toast(t("demoLoaded"));
 });
 
-els.recordForm.addEventListener("submit", (event) => {
+els.recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!vault) return;
   const title = els.recordTitle.value.trim();
   const detail = els.recordDetail.value.trim();
   if (!title || !detail) return;
-  vault.records.unshift({
-    id: crypto.randomUUID(),
-    category: els.recordCategory.value,
-    title,
-    detail,
-    sensitivity: els.recordSensitivity.value,
-  });
-  vault.updatedAt = new Date().toISOString();
-  els.recordForm.reset();
-  renderCategoryOptions();
-  renderRecords();
-  renderExportPreview();
+  try {
+    const sensitivity = els.recordSensitivity.value;
+    const attachments = await readSelectedAttachments(sensitivity);
+    vault.attachments.push(...attachments);
+    vault.records.unshift({
+      id: crypto.randomUUID(),
+      category: els.recordCategory.value,
+      title,
+      detail,
+      sensitivity,
+      attachmentIds: attachments.map((attachment) => attachment.id),
+    });
+    vault.updatedAt = new Date().toISOString();
+    els.recordForm.reset();
+    renderCategoryOptions();
+    renderRecords();
+    renderExportPreview();
+  } catch (error) {
+    console.warn(error);
+    toast(error.message);
+  }
 });
 
 els.saveVaultButton.addEventListener("click", saveEncrypted);

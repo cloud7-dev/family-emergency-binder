@@ -1,4 +1,4 @@
-const CACHE_NAME = "family-emergency-binder-v1";
+const CACHE_NAME = "family-emergency-binder-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",

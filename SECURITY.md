@@ -11,6 +11,7 @@ This project handles sensitive household metadata. Please report security issues
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
 - Decrypted data is intended to stay in memory while the vault is unlocked.
+- Small attachments are encrypted in the same vault file, but they increase vault size and sensitive-data impact.
 
 ## Do not store yet / 아직 저장하지 말 것
 
@@ -19,6 +20,7 @@ This project handles sensitive household metadata. Please report security issues
 - Seed phrases.
 - Full national ID numbers.
 - Any secret whose loss would be catastrophic.
+- Unredacted scans that expose more data than a helper would need in an emergency.
 
 ## Review checklist / 검토 체크리스트
 
@@ -28,4 +30,5 @@ This project handles sensitive household metadata. Please report security issues
 - Export redaction.
 - Clipboard behavior.
 - Service worker cache scope.
-- Attachment encryption design.
+- Attachment restore and deletion paths.
+- Backup-before-migrate flow.
