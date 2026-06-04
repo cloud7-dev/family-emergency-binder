@@ -1,16 +1,19 @@
 {
   "name": "family-emergency-binder",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
-  "description": "A local-first encrypted emergency binder for families.",
+  "description": "ReadyBinder is a local-first encrypted emergency vault for families.",
   "type": "commonjs",
   "scripts": {
     "serve": "python3 -m http.server 8765",
-    "test": "node --check app.js && node --check scripts/static-check.js && node --check scripts/qa-headless.js && node scripts/static-check.js",
+    "test": "node --check app.js && node --check scripts/static-check.js && node --check scripts/qa-headless.js && node --check scripts/security-test.js && node scripts/static-check.js",
+    "security:test": "node scripts/security-test.js",
     "qa:browser": "node scripts/qa-headless.js"
   },
   "keywords": [
+    "readybinder",
     "emergency-binder",
+    "emergency-vault",
     "family-emergency-binder",
     "local-first",
     "privacy-first",

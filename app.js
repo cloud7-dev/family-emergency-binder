@@ -11,7 +11,7 @@ const languages = [
 
 const translations = {
   en: {
-    appName: "Family Emergency Binder",
+    appName: "ReadyBinder",
     tagline: "Local-first encrypted vault",
     navVault: "Vault",
     navDocuments: "Documents",
@@ -22,7 +22,7 @@ const translations = {
     navExports: "Exports",
     navSettings: "Settings",
     localOnly: "Local only. No upload.",
-    screenTitle: "Emergency binder vault",
+    screenTitle: "ReadyBinder emergency vault",
     screenSubtitle: "Organize critical household references without sending them to a server.",
     language: "Language",
     lock: "Lock",
@@ -38,6 +38,16 @@ const translations = {
     createUnlock: "Create or unlock vault",
     loadDemo: "Load demo data",
     readiness: "Readiness",
+    vaultStatus: "Vault status",
+    vaultStatusLocked: "Create or unlock a vault to start.",
+    vaultStatusUnlocked: "Local vault is open in this browser.",
+    readinessCopyShort: "Complete the core household categories.",
+    nextActions: "Next actions",
+    recentRecords: "Recent records",
+    nextActionLocked: "Open a local vault before adding records.",
+    nextActionAddRecords: "Add the first document, medical, insurance, contact, or recovery record.",
+    nextActionChecklist: "Finish the missing preparedness checklist categories.",
+    nextActionBackup: "Save locally, download the vault, and print a redacted packet.",
     privacyControls: "Privacy controls",
     privacyCopy: "Default to hints and redacted exports.",
     controlNoServer: "No server upload",
@@ -48,6 +58,14 @@ const translations = {
     checklistCopy: "Track what is complete, missing, stale, or needs review.",
     recordsTitle: "Vault records",
     recordsCopy: "Store references, locations, contacts, and recovery hints.",
+    searchRecords: "Search records",
+    categoryFilter: "Category filter",
+    sensitivityFilter: "Sensitivity filter",
+    searchPlaceholder: "Search title or hint",
+    allCategories: "All categories",
+    allSensitivity: "All sensitivity",
+    showingRecords: "Showing records",
+    noMatchingRecords: "No records match the current filters.",
     category: "Category",
     title: "Title",
     detail: "Location or hint",
@@ -82,7 +100,7 @@ const translations = {
     fileTooLarge: "File is too large. Limit is 5MB per file.",
     vaultTooLarge: "Vault attachments are too large. Limit is 20MB total.",
     unsupportedFile: "Unsupported file type. Use PDF, PNG, JPG, WebP, or TXT.",
-    invalidVault: "This does not look like a Family Emergency Binder vault.",
+    invalidVault: "This does not look like a ReadyBinder vault.",
     migratedVault: "Imported older vault schema and upgraded it in memory.",
     downloadCurrentBackup: "Download current backup",
     backupBeforeImport: "Download the current vault backup before replacing it.",
@@ -117,7 +135,7 @@ const translations = {
     emergencyPacket: "Redacted emergency packet",
   },
   ko: {
-    appName: "Family Emergency Binder",
+    appName: "ReadyBinder",
     tagline: "로컬 우선 암호화 vault",
     navVault: "Vault",
     navDocuments: "중요 문서",
@@ -128,7 +146,7 @@ const translations = {
     navExports: "내보내기",
     navSettings: "설정",
     localOnly: "로컬 전용. 업로드 없음.",
-    screenTitle: "가족 비상 바인더 vault",
+    screenTitle: "ReadyBinder 비상 vault",
     screenSubtitle: "중요한 가정 정보를 서버로 보내지 않고 정리합니다.",
     language: "언어",
     lock: "잠금",
@@ -144,6 +162,16 @@ const translations = {
     createUnlock: "Vault 생성 또는 열기",
     loadDemo: "데모 데이터 불러오기",
     readiness: "준비도",
+    vaultStatus: "Vault 상태",
+    vaultStatusLocked: "시작하려면 vault를 생성하거나 여세요.",
+    vaultStatusUnlocked: "로컬 vault가 이 브라우저에서 열려 있습니다.",
+    readinessCopyShort: "핵심 가정 카테고리를 완료하세요.",
+    nextActions: "다음 작업",
+    recentRecords: "최근 기록",
+    nextActionLocked: "기록을 추가하기 전에 로컬 vault를 여세요.",
+    nextActionAddRecords: "문서, 의료, 보험, 연락처, 복구 기록 중 첫 항목을 추가하세요.",
+    nextActionChecklist: "누락된 준비 체크리스트 카테고리를 완료하세요.",
+    nextActionBackup: "로컬 저장, vault 다운로드, 가려진 패킷 출력을 진행하세요.",
     privacyControls: "프라이버시 제어",
     privacyCopy: "기본값은 힌트와 가려진 출력본입니다.",
     controlNoServer: "서버 업로드 없음",
@@ -154,6 +182,14 @@ const translations = {
     checklistCopy: "완료, 누락, 오래됨, 검토 필요 상태를 추적합니다.",
     recordsTitle: "Vault 기록",
     recordsCopy: "문서 위치, 연락처, 복구 힌트를 저장합니다.",
+    searchRecords: "기록 검색",
+    categoryFilter: "카테고리 필터",
+    sensitivityFilter: "민감도 필터",
+    searchPlaceholder: "제목 또는 힌트 검색",
+    allCategories: "전체 카테고리",
+    allSensitivity: "전체 민감도",
+    showingRecords: "표시 중인 기록",
+    noMatchingRecords: "현재 필터와 일치하는 기록이 없습니다.",
     category: "카테고리",
     title: "제목",
     detail: "위치 또는 힌트",
@@ -188,7 +224,7 @@ const translations = {
     fileTooLarge: "파일이 너무 큽니다. 파일당 5MB까지 가능합니다.",
     vaultTooLarge: "vault 첨부파일이 너무 큽니다. 전체 20MB까지 가능합니다.",
     unsupportedFile: "지원하지 않는 파일 형식입니다. PDF, PNG, JPG, WebP, TXT를 사용하세요.",
-    invalidVault: "Family Emergency Binder vault 형식이 아닙니다.",
+    invalidVault: "ReadyBinder vault 형식이 아닙니다.",
     migratedVault: "이전 vault schema를 가져와 메모리에서 업그레이드했습니다.",
     downloadCurrentBackup: "현재 백업 다운로드",
     backupBeforeImport: "vault를 교체하기 전에 현재 vault 백업을 먼저 다운로드하세요.",
@@ -235,7 +271,7 @@ translations.ja = {
   navExports: "エクスポート",
   navSettings: "設定",
   localOnly: "ローカルのみ。アップロードなし。",
-  screenTitle: "緊急バインダー vault",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "重要な家庭情報をサーバーへ送らず整理します。",
   language: "言語",
   lock: "ロック",
@@ -302,7 +338,7 @@ translations["zh-Hans"] = {
   navExports: "导出",
   navSettings: "设置",
   localOnly: "仅本地保存。不会上传。",
-  screenTitle: "家庭应急资料 vault",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "整理关键家庭信息，不发送到服务器。",
   language: "语言",
   lock: "锁定",
@@ -369,7 +405,7 @@ translations.de = {
   navExports: "Exporte",
   navSettings: "Einstellungen",
   localOnly: "Nur lokal. Kein Upload.",
-  screenTitle: "Notfallordner-Vault",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "Wichtige Haushaltsinformationen organisieren, ohne sie an einen Server zu senden.",
   language: "Sprache",
   lock: "Sperren",
@@ -436,7 +472,7 @@ translations.fr = {
   navExports: "Exports",
   navSettings: "Parametres",
   localOnly: "Local uniquement. Aucun envoi.",
-  screenTitle: "Vault de dossier d'urgence",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "Organisez les informations critiques du foyer sans les envoyer a un serveur.",
   language: "Langue",
   lock: "Verrouiller",
@@ -503,7 +539,7 @@ translations.it = {
   navExports: "Esportazioni",
   navSettings: "Impostazioni",
   localOnly: "Solo locale. Nessun upload.",
-  screenTitle: "Vault del raccoglitore di emergenza",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "Organizza informazioni domestiche critiche senza inviarle a un server.",
   language: "Lingua",
   lock: "Blocca",
@@ -570,7 +606,7 @@ translations.hi = {
   navExports: "निर्यात",
   navSettings: "सेटिंग्स",
   localOnly: "केवल स्थानीय। कोई अपलोड नहीं।",
-  screenTitle: "परिवार आपातकालीन binder vault",
+  screenTitle: "ReadyBinder emergency vault",
   screenSubtitle: "महत्वपूर्ण घरेलू जानकारी को सर्वर पर भेजे बिना व्यवस्थित करें।",
   language: "भाषा",
   lock: "लॉक",
@@ -640,6 +676,7 @@ const languageKey = "family-emergency-binder.language";
 const vaultSchemaVersion = 2;
 const maxAttachmentBytes = 5 * 1024 * 1024;
 const maxTotalAttachmentBytes = 20 * 1024 * 1024;
+const maxAttachmentNameLength = 160;
 const allowedAttachmentTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]);
 const allowedAttachmentExtensions = new Set(["pdf", "png", "jpg", "jpeg", "webp", "txt"]);
 
@@ -649,6 +686,10 @@ let activePassphrase = "";
 let isUnlocked = false;
 let importBackupReady = false;
 let pendingImportSummary = "";
+let activeSection = "vault";
+let recordSearch = "";
+let recordCategoryFilter = "all";
+let recordSensitivityFilter = "all";
 
 const els = {
   languageSelect: document.querySelector("#languageSelect"),
@@ -677,6 +718,18 @@ const els = {
   markRecoveryTestButton: document.querySelector("#markRecoveryTestButton"),
   downloadCurrentBackupButton: document.querySelector("#downloadCurrentBackupButton"),
   printPacketButton: document.querySelector("#printPacketButton"),
+  navItems: document.querySelectorAll(".nav-item"),
+  dashboardVaultStatus: document.querySelector("#dashboardVaultStatus"),
+  dashboardVaultCopy: document.querySelector("#dashboardVaultCopy"),
+  dashboardReadiness: document.querySelector("#dashboardReadiness"),
+  dashboardReadinessCopy: document.querySelector("#dashboardReadinessCopy"),
+  dashboardNextAction: document.querySelector("#dashboardNextAction"),
+  dashboardNextActionCopy: document.querySelector("#dashboardNextActionCopy"),
+  dashboardRecentRecords: document.querySelector("#dashboardRecentRecords"),
+  recordSearch: document.querySelector("#recordSearch"),
+  recordCategoryFilter: document.querySelector("#recordCategoryFilter"),
+  recordSensitivityFilter: document.querySelector("#recordSensitivityFilter"),
+  importStatus: document.querySelector("#importStatus"),
 };
 
 function t(key) {
@@ -690,9 +743,11 @@ function applyTranslations() {
   });
   renderVaultState();
   renderCategoryOptions();
+  renderRecordFilterOptions();
   renderChecklist();
   renderRecords();
   renderExportPreview();
+  renderDashboard();
 }
 
 function setupLanguageSelect() {
@@ -719,6 +774,38 @@ function renderCategoryOptions() {
     option.textContent = t(key);
     els.recordCategory.append(option);
   });
+}
+
+function renderRecordFilterOptions() {
+  if (!els.recordCategoryFilter || !els.recordSensitivityFilter) return;
+  els.recordSearch.placeholder = t("searchPlaceholder");
+  els.recordSearch.value = recordSearch;
+  els.recordCategoryFilter.innerHTML = "";
+  const allCategory = document.createElement("option");
+  allCategory.value = "all";
+  allCategory.textContent = t("allCategories");
+  els.recordCategoryFilter.append(allCategory);
+  categoryKeys.forEach((key) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = t(key);
+    els.recordCategoryFilter.append(option);
+  });
+  els.recordCategoryFilter.value = recordCategoryFilter;
+
+  els.recordSensitivityFilter.innerHTML = "";
+  [
+    ["all", t("allSensitivity")],
+    ["safe", t("safeToPrint")],
+    ["trusted", t("trustedFamily")],
+    ["secret", t("fullVaultOnly")],
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    els.recordSensitivityFilter.append(option);
+  });
+  els.recordSensitivityFilter.value = recordSensitivityFilter;
 }
 
 function defaultVault(familyName = "") {
@@ -786,7 +873,7 @@ function demoVault() {
         id: demoAttachmentId,
         name: "demo-medical-note.txt",
         type: "text/plain",
-        size: 51,
+        size: 55,
         createdAt: new Date().toISOString(),
         redaction: "safe",
         dataBase64: textToBase64("Demo allergy note. Replace this with a real scan later."),
@@ -803,7 +890,12 @@ function demoVault() {
 
 function migrateVaultSchema(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.records)) {
-    throw new Error("Invalid vault schema");
+    throw new Error(t("invalidVault"));
+  }
+  const attachments = Array.isArray(input.attachments) ? input.attachments.map(validateAttachment) : [];
+  const decodedTotal = attachments.reduce((total, attachment) => total + attachment.size, 0);
+  if (decodedTotal > maxTotalAttachmentBytes) {
+    throw new Error(t("vaultTooLarge"));
   }
   const migrated = {
     version: vaultSchemaVersion,
@@ -817,7 +909,7 @@ function migrateVaultSchema(input) {
       sensitivity: ["safe", "trusted", "secret"].includes(record.sensitivity) ? record.sensitivity : "trusted",
       attachmentIds: Array.isArray(record.attachmentIds) ? record.attachmentIds : [],
     })),
-    attachments: Array.isArray(input.attachments) ? input.attachments.filter(isValidAttachment) : [],
+    attachments,
     backup: {
       lastSavedAt: input.backup?.lastSavedAt || null,
       lastDownloadedAt: input.backup?.lastDownloadedAt || null,
@@ -830,23 +922,61 @@ function migrateVaultSchema(input) {
     ...record,
     attachmentIds: record.attachmentIds.filter((id) => attachmentIds.has(id)),
   }));
-  if (migrated.attachments.reduce((total, attachment) => total + attachment.size, 0) > maxTotalAttachmentBytes) {
-    throw new Error(t("vaultTooLarge"));
-  }
   return migrated;
 }
 
 function isValidAttachment(attachment) {
-  return (
-    attachment &&
-    typeof attachment.id === "string" &&
-    typeof attachment.name === "string" &&
-    typeof attachment.type === "string" &&
-    typeof attachment.size === "number" &&
-    typeof attachment.createdAt === "string" &&
-    ["safe", "trusted", "secret"].includes(attachment.redaction) &&
-    typeof attachment.dataBase64 === "string"
-  );
+  try {
+    validateAttachment(attachment);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateAttachment(attachment) {
+  if (!attachment || typeof attachment !== "object") throw new Error(t("invalidVault"));
+  if (!isNonEmptyBoundedString(attachment.id, 120)) throw new Error(t("invalidVault"));
+  if (!isNonEmptyBoundedString(attachment.name, maxAttachmentNameLength)) throw new Error(t("invalidVault"));
+  if (!isNonEmptyBoundedString(attachment.type, 120)) throw new Error(t("invalidVault"));
+  if (!Number.isInteger(attachment.size) || attachment.size < 0 || attachment.size > maxAttachmentBytes) {
+    throw new Error(t("invalidVault"));
+  }
+  if (!isNonEmptyBoundedString(attachment.createdAt, 80)) throw new Error(t("invalidVault"));
+  if (!["safe", "trusted", "secret"].includes(attachment.redaction)) throw new Error(t("invalidVault"));
+  if (typeof attachment.dataBase64 !== "string") throw new Error(t("invalidVault"));
+  if (!isAllowedAttachmentMetadata(attachment)) throw new Error(t("invalidVault"));
+  const decoded = decodeBase64Strict(attachment.dataBase64);
+  if (decoded.byteLength !== attachment.size) throw new Error(t("invalidVault"));
+  return {
+    id: attachment.id,
+    name: attachment.name,
+    type: attachment.type,
+    size: attachment.size,
+    createdAt: attachment.createdAt,
+    redaction: attachment.redaction,
+    dataBase64: attachment.dataBase64,
+  };
+}
+
+function isNonEmptyBoundedString(value, maxLength) {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
+}
+
+function isAllowedAttachmentMetadata(attachment) {
+  const extension = attachment.name.split(".").pop()?.toLowerCase() || "";
+  return allowedAttachmentTypes.has(attachment.type) || allowedAttachmentExtensions.has(extension);
+}
+
+function decodeBase64Strict(value) {
+  if (value.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) {
+    throw new Error(t("invalidVault"));
+  }
+  try {
+    return fromBase64(value);
+  } catch {
+    throw new Error(t("invalidVault"));
+  }
 }
 
 function renderChecklist() {
@@ -879,11 +1009,53 @@ function renderChecklist() {
 }
 
 function updateReadiness() {
-  const values = Object.values(vault?.checklist || {});
-  const complete = values.filter((value) => value === "complete").length;
-  const score = values.length ? Math.round((complete / values.length) * 100) : 0;
+  const score = calculateReadinessScore();
   els.readinessScore.textContent = `${score}%`;
   els.progressFill.style.width = `${score}%`;
+  renderDashboard();
+}
+
+function calculateReadinessScore() {
+  const values = Object.values(vault?.checklist || {});
+  const complete = values.filter((value) => value === "complete").length;
+  return values.length ? Math.round((complete / values.length) * 100) : 0;
+}
+
+function renderDashboard() {
+  if (!els.dashboardVaultStatus) return;
+  const score = calculateReadinessScore();
+  els.dashboardVaultStatus.textContent = isUnlocked ? t("unlocked") : t("locked");
+  els.dashboardVaultCopy.textContent = isUnlocked ? t("vaultStatusUnlocked") : t("vaultStatusLocked");
+  els.dashboardReadiness.textContent = `${score}%`;
+  els.dashboardReadinessCopy.textContent = t("readinessCopyShort");
+
+  if (!isUnlocked) {
+    els.dashboardNextAction.textContent = t("navVault");
+    els.dashboardNextActionCopy.textContent = t("nextActionLocked");
+  } else if (!vault.records.length) {
+    els.dashboardNextAction.textContent = t("addRecord");
+    els.dashboardNextActionCopy.textContent = t("nextActionAddRecords");
+  } else if (score < 100) {
+    els.dashboardNextAction.textContent = t("checklistTitle");
+    els.dashboardNextActionCopy.textContent = t("nextActionChecklist");
+  } else {
+    els.dashboardNextAction.textContent = t("exportTitle");
+    els.dashboardNextActionCopy.textContent = t("nextActionBackup");
+  }
+
+  els.dashboardRecentRecords.innerHTML = "";
+  const recent = (vault?.records || []).slice(-3).reverse();
+  if (!recent.length) {
+    const empty = document.createElement("p");
+    empty.textContent = t("emptyRecords");
+    els.dashboardRecentRecords.append(empty);
+    return;
+  }
+  recent.forEach((record) => {
+    const item = document.createElement("span");
+    item.textContent = `${t(record.category)}: ${record.title}`;
+    els.dashboardRecentRecords.append(item);
+  });
 }
 
 function renderRecords() {
@@ -892,10 +1064,30 @@ function renderRecords() {
     const empty = document.createElement("p");
     empty.textContent = t("emptyRecords");
     els.recordList.append(empty);
+    renderDashboard();
     return;
   }
   const template = document.querySelector("#recordTemplate");
-  vault.records.forEach((record) => {
+  const search = recordSearch.trim().toLowerCase();
+  const filteredRecords = vault.records.filter((record) => {
+    const matchesSearch =
+      !search ||
+      [record.title, record.detail, t(record.category)]
+        .join(" ")
+        .toLowerCase()
+        .includes(search);
+    const matchesCategory = recordCategoryFilter === "all" || record.category === recordCategoryFilter;
+    const matchesSensitivity = recordSensitivityFilter === "all" || record.sensitivity === recordSensitivityFilter;
+    return matchesSearch && matchesCategory && matchesSensitivity;
+  });
+  if (!filteredRecords.length) {
+    const empty = document.createElement("p");
+    empty.textContent = t("noMatchingRecords");
+    els.recordList.append(empty);
+    renderDashboard();
+    return;
+  }
+  filteredRecords.forEach((record) => {
     const card = template.content.firstElementChild.cloneNode(true);
     card.querySelector(".record-category").textContent = t(record.category);
     card.querySelector("h3").textContent = record.title;
@@ -917,7 +1109,10 @@ function renderRecords() {
         const chip = document.createElement("div");
         chip.className = "attachment-chip";
         const label = document.createElement("span");
+        label.className = "attachment-label";
         label.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
+        const actions = document.createElement("span");
+        actions.className = "attachment-actions";
         const downloadButton = document.createElement("button");
         downloadButton.className = "chip-action";
         downloadButton.type = "button";
@@ -929,19 +1124,19 @@ function renderRecords() {
         removeButton.type = "button";
         removeButton.textContent = t("removeAttachment");
         removeButton.addEventListener("click", () => removeAttachmentFromRecord(record.id, attachment.id));
-        chip.append(label, downloadButton, removeButton);
+        actions.append(downloadButton, removeButton);
+        chip.append(label, actions);
         list.append(chip);
       });
       card.querySelector("div").append(list);
     }
     els.recordList.append(card);
   });
+  renderDashboard();
 }
 
 function renderExportPreview() {
-  els.exportPreview.textContent = pendingImportSummary
-    ? `${t("backupBeforeImport")}\n${pendingImportSummary}\n\n${buildEmergencyPacket()}`
-    : buildEmergencyPacket();
+  els.exportPreview.textContent = buildEmergencyPacket();
   renderImportAssistant();
 }
 
@@ -974,6 +1169,7 @@ function renderVaultState() {
   els.vaultStateBadge.classList.toggle("warning", !isUnlocked);
   els.vaultStateBadge.classList.toggle("ready", isUnlocked);
   if (els.markRecoveryTestButton) els.markRecoveryTestButton.disabled = !isUnlocked;
+  renderDashboard();
 }
 
 async function deriveKey(passphrase, salt) {
@@ -1068,7 +1264,7 @@ async function fileToAttachment(file, redaction, projectedTotalBefore = getTotal
   const bytes = new Uint8Array(await file.arrayBuffer());
   return {
     id: crypto.randomUUID(),
-    name: file.name,
+    name: normalizeAttachmentFilename(file.name),
     type: file.type || "application/octet-stream",
     size: file.size,
     createdAt: new Date().toISOString(),
@@ -1090,7 +1286,7 @@ async function readSelectedAttachments(redaction) {
 }
 
 function canDownloadAttachment(attachment) {
-  return Boolean(attachment?.name && attachment?.type && attachment?.dataBase64);
+  return Boolean(attachment?.name && attachment?.type && attachment?.dataBase64 && isValidAttachment(attachment));
 }
 
 function downloadAttachment(attachmentId) {
@@ -1103,12 +1299,24 @@ function downloadAttachment(attachmentId) {
     const blob = new Blob([fromBase64(attachment.dataBase64)], {
       type: attachment.type || "application/octet-stream",
     });
-    downloadBlobFile(attachment.name, blob);
+    downloadBlobFile(normalizeAttachmentFilename(attachment.name), blob);
     toast(t("attachmentDownloaded"));
   } catch (error) {
     console.warn(error);
     toast(t("brokenAttachment"));
   }
+}
+
+function normalizeAttachmentFilename(filename, fallback = "attachment") {
+  const normalized = String(filename || "")
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[\\/:"<>|?*]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[.\-\s]+/, "")
+    .slice(0, maxAttachmentNameLength);
+  return normalized || fallback;
 }
 
 function removeAttachmentFromRecord(recordId, attachmentId) {
@@ -1184,6 +1392,9 @@ function buildImportPreview(importedVault, envelope) {
 function renderImportAssistant() {
   if (!els.downloadCurrentBackupButton) return;
   els.downloadCurrentBackupButton.classList.toggle("hidden", !pendingImportSummary);
+  if (!els.importStatus) return;
+  els.importStatus.classList.toggle("hidden", !pendingImportSummary);
+  els.importStatus.textContent = pendingImportSummary ? `${t("backupBeforeImport")}\n${pendingImportSummary}` : "";
 }
 
 async function downloadCurrentBackup() {
@@ -1265,7 +1476,7 @@ function buildEmergencyPacket() {
 function buildRecoveryWorksheet() {
   const name = vault?.familyName || t("appName");
   return [
-    `Family Emergency Binder recovery worksheet: ${name}`,
+    `ReadyBinder recovery worksheet: ${name}`,
     "",
     "This sheet should not include the full passphrase.",
     "Vault file location:",
@@ -1300,7 +1511,7 @@ function downloadTextFile(filename, content, type = "text/plain") {
 function downloadBlobFile(filename, blob) {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = filename;
+  link.download = normalizeAttachmentFilename(filename, "readybinder-download");
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -1334,6 +1545,53 @@ function printPacket() {
 
 function toast(message) {
   els.exportPreview.textContent = `${message}\n\n${els.exportPreview.textContent}`;
+}
+
+function setActiveSection(section) {
+  activeSection = section;
+  els.navItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.section === section);
+  });
+}
+
+function scrollToSection(selector) {
+  document.querySelector(selector)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function setupNavigation() {
+  els.navItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const section = item.dataset.section;
+      if (categoryKeys.includes(section)) {
+        recordCategoryFilter = section;
+        if (els.recordCategoryFilter) els.recordCategoryFilter.value = section;
+        renderRecords();
+        scrollToSection("#recordsSection");
+        setActiveSection(section);
+        return;
+      }
+      if (section === "vault") scrollToSection("#vaultSection");
+      if (section === "exports") scrollToSection("#exportSection");
+      if (section === "settings") scrollToSection("#cryptoNotice");
+      setActiveSection(section);
+    });
+  });
+}
+
+function setupRecordFilters() {
+  els.recordSearch?.addEventListener("input", () => {
+    recordSearch = els.recordSearch.value;
+    renderRecords();
+  });
+  els.recordCategoryFilter?.addEventListener("change", () => {
+    recordCategoryFilter = els.recordCategoryFilter.value;
+    renderRecords();
+    setActiveSection(categoryKeys.includes(recordCategoryFilter) ? recordCategoryFilter : "vault");
+  });
+  els.recordSensitivityFilter?.addEventListener("change", () => {
+    recordSensitivityFilter = els.recordSensitivityFilter.value;
+    renderRecords();
+  });
 }
 
 els.vaultForm.addEventListener("submit", async (event) => {
@@ -1408,6 +1666,8 @@ els.importVaultInput.addEventListener("change", (event) => {
 });
 
 setupLanguageSelect();
+setupNavigation();
+setupRecordFilters();
 applyTranslations();
 lockVault();
 

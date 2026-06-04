@@ -193,6 +193,21 @@ async function main() {
           await new Promise((resolve) => setTimeout(resolve, 700));
           const recordsAfterWrongImport = document.querySelectorAll('.record-card').length;
           setValue('#passphrase', 'correct horse battery staple');
+          document.querySelector('[data-section="medical"]').click();
+          await new Promise((resolve) => setTimeout(resolve, 160));
+          const navMedicalFilter = document.querySelector('#recordCategoryFilter').value === 'medical';
+          const medicalFilteredCount = document.querySelectorAll('.record-card').length;
+          setValue('#recordCategoryFilter', 'all');
+          setValue('#recordSensitivityFilter', 'safe');
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          const safeFilteredCount = document.querySelectorAll('.record-card').length;
+          setValue('#recordSearch', 'Emergency card');
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          const searchFilteredCount = document.querySelectorAll('.record-card').length;
+          const searchFilteredTitle = document.querySelector('.record-card h3')?.textContent || '';
+          setValue('#recordSearch', '');
+          setValue('#recordSensitivityFilter', 'all');
+          await new Promise((resolve) => setTimeout(resolve, 80));
           document.querySelector('.attachment-chip .danger-text').click();
           await new Promise((resolve) => setTimeout(resolve, 120));
           const attachmentChipsAfterRemove = document.querySelectorAll('.attachment-chip').length;
@@ -234,6 +249,11 @@ async function main() {
             recordsBeforeBackup,
             recordsAfterBackupImport,
             recordsAfterWrongImport,
+            navMedicalFilter,
+            medicalFilteredCount,
+            safeFilteredCount,
+            searchFilteredCount,
+            searchFilteredTitle,
             attachmentChipsAfterRemove,
             recordsAfterDelete,
             recoveryMarked,
@@ -324,9 +344,15 @@ async function main() {
       !qa.packetMentionsAttachment ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v3") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v4") ||
       !qa.offlineShell?.hasShell ||
-      qa.score !== "60%"
+      qa.score !== "60%" ||
+      qa.title !== "ReadyBinder" ||
+      !qa.navMedicalFilter ||
+      qa.medicalFilteredCount < 1 ||
+      qa.safeFilteredCount < 2 ||
+      qa.searchFilteredCount !== 1 ||
+      qa.searchFilteredTitle !== "Emergency card scan"
     ) {
       throw new Error(`Unexpected QA result: ${JSON.stringify(qa)}`);
     }

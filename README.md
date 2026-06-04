@@ -1,8 +1,8 @@
-# Family Emergency Binder / 가족 비상 바인더
+# ReadyBinder / Family Emergency Binder
 
-Family Emergency Binder is a local-first encrypted vault for organizing the critical information your family may need in an emergency. / Family Emergency Binder는 위기 상황에서 가족에게 필요한 핵심 정보를 로컬 암호화 vault로 정리하는 오픈소스 도구입니다.
+ReadyBinder is a local-first emergency vault for organizing the critical information your family may need in an emergency without creating an account or uploading sensitive household data to a server. It keeps the repo/package slug `family-emergency-binder` for compatibility, while the product name is now ReadyBinder.
 
-It is built for families who want a practical digital emergency binder without creating an account or uploading sensitive household data to a server. / 계정 생성이나 서버 업로드 없이, 가족이 실제로 사용할 수 있는 디지털 비상 바인더를 만들기 위한 프로젝트입니다.
+ReadyBinder는 위기 상황에서 가족에게 필요한 핵심 정보를 계정 생성이나 서버 업로드 없이 로컬 암호화 vault로 정리하는 오픈소스 도구입니다. 제품명은 ReadyBinder이고, Family Emergency Binder는 설명형 카테고리명으로 사용합니다.
 
 ## What It Does / 주요 기능
 
@@ -16,6 +16,7 @@ It is built for families who want a practical digital emergency binder without c
 - Backup-before-import assistant to avoid replacing a vault without a current copy / 현재 사본 없이 vault를 교체하지 않도록 돕는 백업 우선 가져오기
 - Preview, print, and download a redacted emergency packet / 가려진 비상 패킷 미리보기, 인쇄, 다운로드
 - Download a recovery worksheet without exposing the passphrase / passphrase를 노출하지 않는 복구 안내서 다운로드
+- Search and filter records by category and sensitivity / 카테고리와 민감도 기준으로 기록 검색 및 필터
 - Switch UI language across eight locales / 8개 언어 UI 전환
 - Install-ready PWA manifest and offline service worker / PWA manifest와 오프라인 service worker 포함
 
@@ -62,7 +63,30 @@ Optional browser QA on macOS with Google Chrome:
 ```sh
 npm run qa:browser
 node scripts/qa-headless.js --mobile
+npm run security:test
 ```
+
+## Verified flows / 검증된 흐름
+
+- Create or unlock a local vault, seed demo data, add TXT attachment, save encrypted locally, lock, and import again.
+- Download an unlocked attachment and verify restored file contents.
+- Remove an attachment from a record, delete a record, and prune unreferenced attachments.
+- Show backup-before-import guidance before replacing an existing vault.
+- Reject wrong-passphrase import without replacing the current vault.
+- Search records, filter by category, filter by sensitivity, and use sidebar category navigation.
+- Render offline app shell from service worker cache `family-emergency-binder-v4`.
+- Keep redacted packet output free of attachment raw data and `dataBase64`.
+
+## Known limitations / 알려진 제한
+
+- This MVP has not had an external security audit.
+- Attachments are stored as base64 inside one encrypted vault JSON, so this is not designed for large files.
+- Image/text preview, drag-and-drop, bulk ZIP export, Argon2id, cloud sync, and repo rename are out of v0.4 scope.
+- Browser local storage and downloads are still the user's backup responsibility.
+
+## Security test scope / 보안 테스트 범위
+
+`npm run security:test` loads the app in headless Chrome and checks corrupt attachment base64 rejection, decoded size mismatch rejection, negative and excessive metadata rejection, decoded 20MB total limit enforcement, unsafe filename normalization, encrypted invalid-vault import rejection, and XSS payloads rendered as text.
 
 ## Security Model / 보안 모델
 
@@ -93,7 +117,7 @@ See [SECURITY.md](./SECURITY.md), [docs/en/security.md](./docs/en/security.md), 
 
 ## GitHub Topics / 추천 토픽
 
-`emergency-binder`, `family-emergency-binder`, `digital-vault`, `encrypted-vault`, `local-first`, `privacy-first`, `offline-first`, `pwa`, `personal-data`, `preparedness`, `secure-notes`, `document-management`, `password-recovery`, `open-source`
+`readybinder`, `emergency-binder`, `emergency-vault`, `family-emergency-binder`, `digital-vault`, `encrypted-vault`, `local-first`, `privacy-first`, `offline-first`, `pwa`, `personal-data`, `preparedness`, `secure-notes`, `document-management`, `password-recovery`, `open-source`
 
 ## License / 라이선스
 

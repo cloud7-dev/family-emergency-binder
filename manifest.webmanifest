@@ -1,7 +1,7 @@
 {
-  "name": "Family Emergency Binder",
-  "short_name": "Emergency Binder",
-  "description": "A local-first encrypted emergency binder for families.",
+  "name": "ReadyBinder",
+  "short_name": "ReadyBinder",
+  "description": "A local-first encrypted emergency vault for families.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",

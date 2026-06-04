@@ -25,8 +25,18 @@ const requiredStrings = [
   "deleteRecord",
   "downloadCurrentBackup",
   "markRecoveryTest",
+  "ReadyBinder",
+  "recordSearch",
+  "recordCategoryFilter",
+  "recordSensitivityFilter",
+  "renderDashboard",
+  "setupNavigation",
+  "validateAttachment",
+  "decodeBase64Strict",
+  "normalizeAttachmentFilename",
   "maxAttachmentBytes = 5 * 1024 * 1024",
   "maxTotalAttachmentBytes = 20 * 1024 * 1024",
+  "maxAttachmentNameLength = 160",
 ];
 const requiredFiles = ["index.html", "styles.css", "app.js", "sw.js", "manifest.webmanifest", "README.md", "LICENSE"];
 
@@ -54,6 +64,10 @@ for (const id of [
   "downloadCurrentBackupButton",
   "printPacketButton",
   "recordAttachment",
+  "recordSearch",
+  "recordCategoryFilter",
+  "recordSensitivityFilter",
+  "importStatus",
   "delete-record-button",
 ]) {
   if (!html.includes(id)) failures.push(`Missing HTML control ${id}`);
@@ -69,8 +83,10 @@ if (!manifest.name || manifest.display !== "standalone") {
   failures.push("Manifest is incomplete");
 }
 
-if (pkg.version !== "0.3.0") failures.push("Package version must be 0.3.0");
-if (!sw.includes("family-emergency-binder-v3")) failures.push("Service worker cache must be v3");
+if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
+if (pkg.version !== "0.4.0") failures.push("Package version must be 0.4.0");
+if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
+if (!sw.includes("family-emergency-binder-v4")) failures.push("Service worker cache must be v4");
 
 if (failures.length) {
   console.error(failures.join("\n"));

@@ -3,22 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Family Emergency Binder</title>
+    <title>ReadyBinder</title>
     <meta
       name="description"
-      content="A local-first encrypted emergency binder for family documents, medical information, insurance, contacts, and recovery hints."
+      content="ReadyBinder is a local-first encrypted emergency vault for family documents, medical information, insurance, contacts, and recovery hints."
     />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=8" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary">
         <div class="brand">
-          <div class="brand-mark" aria-hidden="true">FEB</div>
+          <div class="brand-mark" aria-hidden="true">RB</div>
           <div>
-            <strong data-i18n="appName">Family Emergency Binder</strong>
+            <strong data-i18n="appName">ReadyBinder</strong>
             <span data-i18n="tagline">Local-first encrypted vault</span>
           </div>
         </div>
@@ -64,8 +64,30 @@
           </span>
         </section>
 
+        <section id="dashboardSection" class="dashboard-grid" aria-label="Vault dashboard">
+          <article class="dashboard-card">
+            <span class="dashboard-label" data-i18n="vaultStatus">Vault status</span>
+            <strong id="dashboardVaultStatus">Locked</strong>
+            <p id="dashboardVaultCopy" data-i18n="vaultStatusLocked">Create or unlock a vault to start.</p>
+          </article>
+          <article class="dashboard-card">
+            <span class="dashboard-label" data-i18n="readiness">Readiness</span>
+            <strong id="dashboardReadiness">0%</strong>
+            <p id="dashboardReadinessCopy" data-i18n="readinessCopyShort">Complete the core household categories.</p>
+          </article>
+          <article class="dashboard-card">
+            <span class="dashboard-label" data-i18n="nextActions">Next actions</span>
+            <strong id="dashboardNextAction">Unlock vault</strong>
+            <p id="dashboardNextActionCopy" data-i18n="nextActionLocked">Open a local vault before adding records.</p>
+          </article>
+          <article class="dashboard-card">
+            <span class="dashboard-label" data-i18n="recentRecords">Recent records</span>
+            <div id="dashboardRecentRecords" class="recent-records"></div>
+          </article>
+        </section>
+
         <div class="content-grid">
-          <section class="panel vault-panel">
+          <section id="vaultSection" class="panel vault-panel">
             <div class="panel-header">
               <div>
                 <h2 data-i18n="vaultSetup">Vault setup</h2>
@@ -131,7 +153,7 @@
           </aside>
         </div>
 
-        <section class="panel">
+        <section id="checklistSection" class="panel">
           <div class="panel-header">
             <div>
               <h2 data-i18n="checklistTitle">Preparedness checklist</h2>
@@ -141,12 +163,27 @@
           <div id="checklist" class="checklist-grid"></div>
         </section>
 
-        <section class="panel">
+        <section id="recordsSection" class="panel">
           <div class="panel-header">
             <div>
               <h2 data-i18n="recordsTitle">Vault records</h2>
               <p data-i18n="recordsCopy">Store references, locations, contacts, and recovery hints.</p>
             </div>
+          </div>
+
+          <div class="record-tools" aria-label="Record filters">
+            <label class="field">
+              <span data-i18n="searchRecords">Search records</span>
+              <input id="recordSearch" autocomplete="off" placeholder="Search title or hint" />
+            </label>
+            <label class="field">
+              <span data-i18n="categoryFilter">Category filter</span>
+              <select id="recordCategoryFilter"></select>
+            </label>
+            <label class="field">
+              <span data-i18n="sensitivityFilter">Sensitivity filter</span>
+              <select id="recordSensitivityFilter"></select>
+            </label>
           </div>
 
           <form id="recordForm" class="record-form">
@@ -183,13 +220,13 @@
           <div id="recordList" class="record-list" aria-live="polite"></div>
         </section>
 
-        <section class="panel export-panel">
+        <section id="exportSection" class="panel export-panel">
           <div class="panel-header">
             <div>
               <h2 data-i18n="exportTitle">Export</h2>
               <p data-i18n="exportCopy">Download an encrypted vault or preview a redacted emergency packet.</p>
             </div>
-            <div class="button-row">
+            <div class="button-row action-bar">
               <button id="saveVaultButton" class="button secondary" type="button" data-i18n="saveLocal">
                 Save encrypted locally
               </button>
@@ -213,6 +250,7 @@
               </button>
             </div>
           </div>
+          <div id="importStatus" class="inline-alert hidden" aria-live="polite"></div>
           <div id="exportPreview" class="export-preview"></div>
         </section>
       </main>
@@ -234,6 +272,6 @@
       </article>
     </template>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=8"></script>
   </body>
 </html>
