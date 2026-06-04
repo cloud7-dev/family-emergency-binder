@@ -18,8 +18,16 @@ const requiredStrings = [
   "migratedVault",
   "PBKDF2-SHA256-250000",
   "AES-GCM-256",
-  "vaultSchemaVersion = 2",
+  "vaultSchemaVersion = 3",
   "migrateVaultSchema",
+  "fields: normalizeRecordFields",
+  "checksumSha256",
+  "sha256Hex",
+  "renderAttachmentPreview",
+  "activePreviewAttachmentId",
+  "revealedPreviewIds",
+  "previewObjectUrls",
+  "maxPreviewTextBytes = 64 * 1024",
   "downloadAttachment",
   "removeAttachmentFromRecord",
   "deleteRecord",
@@ -84,9 +92,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.4.0") failures.push("Package version must be 0.4.0");
+if (pkg.version !== "0.5.0") failures.push("Package version must be 0.5.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v4")) failures.push("Service worker cache must be v4");
+if (!sw.includes("family-emergency-binder-v5")) failures.push("Service worker cache must be v5");
 
 if (failures.length) {
   console.error(failures.join("\n"));

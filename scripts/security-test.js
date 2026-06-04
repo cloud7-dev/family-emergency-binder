@@ -118,9 +118,9 @@ async function main() {
             node.dispatchEvent(new Event('input', { bubbles: true }));
             node.dispatchEvent(new Event('change', { bubbles: true }));
           };
-          const expectReject = (label, fn) => {
+          const expectReject = async (label, fn) => {
             try {
-              fn();
+              await fn();
               throw new Error(label + ' accepted');
             } catch (error) {
               if (String(error.message).includes('accepted')) throw error;
@@ -158,17 +158,26 @@ async function main() {
             updatedAt: new Date().toISOString(),
           };
 
-          const corruptBase64Rejected = expectReject('corrupt base64', () =>
+          const migratedV2 = await migrateVaultSchema(baseVault);
+          const v2MigrationAddsV3Foundation =
+            migratedV2.version === 3 &&
+            migratedV2.records.every((record) => record.fields && typeof record.fields === 'object') &&
+            migratedV2.attachments.every((attachment) => /^[a-f0-9]{64}$/.test(attachment.checksumSha256 || ''));
+
+          const corruptBase64Rejected = await expectReject('corrupt base64', () =>
             migrateVaultSchema({ ...baseVault, attachments: [{ ...baseAttachment, dataBase64: '!!!!' }] })
           );
-          const sizeMismatchRejected = expectReject('size mismatch', () =>
+          const sizeMismatchRejected = await expectReject('size mismatch', () =>
             migrateVaultSchema({ ...baseVault, attachments: [{ ...baseAttachment, size: 2 }] })
           );
-          const negativeSizeRejected = expectReject('negative size', () =>
+          const negativeSizeRejected = await expectReject('negative size', () =>
             migrateVaultSchema({ ...baseVault, attachments: [{ ...baseAttachment, size: -1 }] })
           );
-          const longNameRejected = expectReject('long filename', () =>
+          const longNameRejected = await expectReject('long filename', () =>
             migrateVaultSchema({ ...baseVault, attachments: [{ ...baseAttachment, name: 'a'.repeat(170) + '.txt' }] })
+          );
+          const checksumMismatchRejected = await expectReject('checksum mismatch', () =>
+            migrateVaultSchema({ ...baseVault, attachments: [{ ...baseAttachment, checksumSha256: '0'.repeat(64) }] })
           );
 
           const chunk = new Uint8Array(4300000);
@@ -179,7 +188,7 @@ async function main() {
             size: chunk.byteLength,
             dataBase64: toBase64(chunk),
           }));
-          const totalLimitRejected = expectReject('total attachment limit', () =>
+          const totalLimitRejected = await expectReject('total attachment limit', () =>
             migrateVaultSchema({ ...baseVault, records: [], attachments: largeAttachments })
           );
 
@@ -193,12 +202,21 @@ async function main() {
 
           setValue('#recordTitle', '<img src=x onerror=window.__xss=1>');
           setValue('#recordDetail', '<script>window.__xss=1<\\/script>');
+          const xssFile = new File(['<script>window.__previewXss=1<\\/script>'], 'xss.txt', { type: 'text/plain' });
+          const xssTransfer = new DataTransfer();
+          xssTransfer.items.add(xssFile);
+          document.querySelector('#recordAttachment').files = xssTransfer.files;
           document.querySelector('#recordForm').requestSubmit();
-          await new Promise((resolve) => setTimeout(resolve, 160));
+          await new Promise((resolve) => setTimeout(resolve, 220));
+          document.querySelector('.preview-attachment-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 220));
           const xssTextOnly =
             window.__xss !== 1 &&
+            window.__previewXss !== 1 &&
             document.querySelector('.record-card h3').textContent.includes('<img') &&
-            !document.querySelector('.record-card h3 img');
+            !document.querySelector('.record-card h3 img') &&
+            document.querySelector('.attachment-preview').textContent.includes('<script>') &&
+            !document.querySelector('.attachment-preview script');
 
           const rawEncrypt = async (data) => {
             const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -240,7 +258,9 @@ async function main() {
             sizeMismatchRejected,
             negativeSizeRejected,
             longNameRejected,
+            checksumMismatchRejected,
             totalLimitRejected,
+            v2MigrationAddsV3Foundation,
             filenameNormalized,
             xssTextOnly,
             invalidImportRejected,

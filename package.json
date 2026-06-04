@@ -1,6 +1,6 @@
 {
   "name": "family-emergency-binder",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": false,
   "description": "ReadyBinder is a local-first encrypted emergency vault for families.",
   "type": "commonjs",
@@ -19,6 +19,8 @@
     "privacy-first",
     "encrypted-vault",
     "encrypted-attachments",
+    "attachment-preview",
+    "offline-vault",
     "pwa"
   ],
   "license": "Apache-2.0"

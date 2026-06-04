@@ -152,17 +152,30 @@ async function main() {
           setValue('#recordCategory', 'documents');
           setValue('#recordTitle', 'Emergency card scan');
           setValue('#recordDetail', 'Tiny QA note attached; original file must stay out of the packet');
-          setValue('#recordSensitivity', 'safe');
+          setValue('#recordSensitivity', 'trusted');
           const qaFile = new File(['tiny attachment contents'], 'qa-note.txt', { type: 'text/plain' });
           const recordTransfer = new DataTransfer();
           recordTransfer.items.add(qaFile);
           document.querySelector('#recordAttachment').files = recordTransfer.files;
           document.querySelector('#recordForm').requestSubmit();
           await new Promise((resolve) => setTimeout(resolve, 200));
+          document.querySelector('.preview-attachment-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          const trustedPreviewText = document.querySelector('.attachment-preview')?.textContent || '';
+          const previewButtonAfterReveal = document.querySelector('.preview-attachment-button')?.textContent || '';
+          const previewButtonShowsHide =
+            previewButtonAfterReveal.includes('Hide') ||
+            previewButtonAfterReveal.includes('닫기') ||
+            previewButtonAfterReveal.includes('Hide preview');
           document.querySelector('#saveVaultButton').click();
           await new Promise((resolve) => setTimeout(resolve, 700));
           const encrypted = localStorage.getItem('family-emergency-binder.encryptedVault');
-          document.querySelector('.attachment-chip .chip-action').click();
+          const currentVaultShape = {
+            version: vault.version,
+            recordsHaveFields: vault.records.every((record) => record.fields && typeof record.fields === 'object'),
+            attachmentsHaveChecksums: vault.attachments.every((attachment) => /^[a-f0-9]{64}$/.test(attachment.checksumSha256 || '')),
+          };
+          document.querySelector('.download-attachment-button').click();
           await new Promise((resolve) => setTimeout(resolve, 150));
           const attachmentDownload = capturedDownloads.at(-1);
           const attachmentDownloadText = attachmentDownload ? await attachmentDownload.blob.text() : '';
@@ -201,14 +214,15 @@ async function main() {
           setValue('#recordSensitivityFilter', 'safe');
           await new Promise((resolve) => setTimeout(resolve, 80));
           const safeFilteredCount = document.querySelectorAll('.record-card').length;
+          setValue('#recordSensitivityFilter', 'all');
+          await new Promise((resolve) => setTimeout(resolve, 80));
           setValue('#recordSearch', 'Emergency card');
           await new Promise((resolve) => setTimeout(resolve, 80));
           const searchFilteredCount = document.querySelectorAll('.record-card').length;
           const searchFilteredTitle = document.querySelector('.record-card h3')?.textContent || '';
           setValue('#recordSearch', '');
-          setValue('#recordSensitivityFilter', 'all');
           await new Promise((resolve) => setTimeout(resolve, 80));
-          document.querySelector('.attachment-chip .danger-text').click();
+          document.querySelector('.remove-attachment-button').click();
           await new Promise((resolve) => setTimeout(resolve, 120));
           const attachmentChipsAfterRemove = document.querySelectorAll('.attachment-chip').length;
           document.querySelector('.delete-record-button').click();
@@ -244,6 +258,10 @@ async function main() {
             attachmentChips: document.querySelectorAll('.attachment-chip').length,
             attachmentDownloadName: attachmentDownload?.name || '',
             attachmentDownloadText,
+            trustedPreviewText,
+            previewButtonAfterReveal,
+            previewButtonShowsHide,
+            currentVaultShape,
             backupButtonVisible,
             backupDownloadName: backupDownload?.name || '',
             recordsBeforeBackup,
@@ -328,11 +346,16 @@ async function main() {
     }
     if (
       !qa.encryptedEnvelope?.hasCiphertext ||
-      qa.encryptedEnvelope.schemaVersion !== 2 ||
+      qa.encryptedEnvelope.schemaVersion !== 3 ||
+      qa.currentVaultShape?.version !== 3 ||
+      !qa.currentVaultShape?.recordsHaveFields ||
+      !qa.currentVaultShape?.attachmentsHaveChecksums ||
       qa.records < 5 ||
       qa.attachmentChips < 2 ||
       qa.attachmentDownloadName !== "qa-note.txt" ||
       qa.attachmentDownloadText !== "tiny attachment contents" ||
+      !qa.trustedPreviewText.includes("tiny attachment contents") ||
+      !qa.previewButtonShowsHide ||
       !qa.backupButtonVisible ||
       !qa.backupDownloadName.endsWith(".before-import.emergencyvault.json") ||
       qa.recordsBeforeBackup !== 5 ||
@@ -344,13 +367,13 @@ async function main() {
       !qa.packetMentionsAttachment ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v4") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v5") ||
       !qa.offlineShell?.hasShell ||
       qa.score !== "60%" ||
       qa.title !== "ReadyBinder" ||
       !qa.navMedicalFilter ||
       qa.medicalFilteredCount < 1 ||
-      qa.safeFilteredCount < 2 ||
+      qa.safeFilteredCount < 1 ||
       qa.searchFilteredCount !== 1 ||
       qa.searchFilteredTitle !== "Emergency card scan"
     ) {

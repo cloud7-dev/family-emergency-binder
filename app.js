@@ -88,6 +88,13 @@ const translations = {
     attachmentLimits: "Attachments are encrypted inside the vault. Limit: 5MB per file, 20MB total.",
     attachmentSummary: "Attachment",
     attachmentHidden: "attachment data redacted",
+    previewAttachment: "Preview",
+    revealPreview: "Reveal preview",
+    hidePreview: "Hide preview",
+    previewUnavailable: "Preview unavailable for this attachment.",
+    previewRequiresReveal: "Trusted and full-vault attachments require an explicit reveal.",
+    previewTruncated: "Preview truncated to 64KB.",
+    checksumMismatch: "Attachment checksum mismatch.",
     downloadAttachment: "Download",
     removeAttachment: "Remove",
     deleteRecord: "Delete record",
@@ -212,6 +219,13 @@ const translations = {
     attachmentLimits: "첨부파일은 vault 안에 암호화됩니다. 제한: 파일당 5MB, 전체 20MB.",
     attachmentSummary: "첨부",
     attachmentHidden: "첨부 원문 가림",
+    previewAttachment: "미리보기",
+    revealPreview: "미리보기 열기",
+    hidePreview: "미리보기 닫기",
+    previewUnavailable: "이 첨부파일은 미리보기를 사용할 수 없습니다.",
+    previewRequiresReveal: "신뢰 가족/전체 vault 첨부파일은 명시적으로 열어야 합니다.",
+    previewTruncated: "미리보기는 64KB까지만 표시됩니다.",
+    checksumMismatch: "첨부파일 checksum이 일치하지 않습니다.",
     downloadAttachment: "다운로드",
     removeAttachment: "제거",
     deleteRecord: "기록 삭제",
@@ -673,10 +687,11 @@ const checklistKeys = [
 const statuses = ["missing", "review", "stale", "complete"];
 const storageKey = "family-emergency-binder.encryptedVault";
 const languageKey = "family-emergency-binder.language";
-const vaultSchemaVersion = 2;
+const vaultSchemaVersion = 3;
 const maxAttachmentBytes = 5 * 1024 * 1024;
 const maxTotalAttachmentBytes = 20 * 1024 * 1024;
 const maxAttachmentNameLength = 160;
+const maxPreviewTextBytes = 64 * 1024;
 const allowedAttachmentTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]);
 const allowedAttachmentExtensions = new Set(["pdf", "png", "jpg", "jpeg", "webp", "txt"]);
 
@@ -690,6 +705,9 @@ let activeSection = "vault";
 let recordSearch = "";
 let recordCategoryFilter = "all";
 let recordSensitivityFilter = "all";
+let activePreviewAttachmentId = "";
+let revealedPreviewIds = new Set();
+let previewObjectUrls = new Map();
 
 const els = {
   languageSelect: document.querySelector("#languageSelect"),
@@ -888,11 +906,13 @@ function demoVault() {
   };
 }
 
-function migrateVaultSchema(input) {
+async function migrateVaultSchema(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.records)) {
     throw new Error(t("invalidVault"));
   }
-  const attachments = Array.isArray(input.attachments) ? input.attachments.map(validateAttachment) : [];
+  const attachments = Array.isArray(input.attachments)
+    ? await Promise.all(input.attachments.map(normalizeAttachmentForVault))
+    : [];
   const decodedTotal = attachments.reduce((total, attachment) => total + attachment.size, 0);
   if (decodedTotal > maxTotalAttachmentBytes) {
     throw new Error(t("vaultTooLarge"));
@@ -908,6 +928,7 @@ function migrateVaultSchema(input) {
       detail: record.detail || "",
       sensitivity: ["safe", "trusted", "secret"].includes(record.sensitivity) ? record.sensitivity : "trusted",
       attachmentIds: Array.isArray(record.attachmentIds) ? record.attachmentIds : [],
+      fields: normalizeRecordFields(record.fields),
     })),
     attachments,
     backup: {
@@ -934,6 +955,24 @@ function isValidAttachment(attachment) {
   }
 }
 
+async function normalizeAttachmentForVault(attachment) {
+  const decoded = validateAttachment(attachment);
+  const checksumSha256 = await sha256Hex(decoded.bytes);
+  if (attachment.checksumSha256 && attachment.checksumSha256 !== checksumSha256) {
+    throw new Error(t("checksumMismatch"));
+  }
+  return {
+    id: attachment.id,
+    name: attachment.name,
+    type: attachment.type,
+    size: attachment.size,
+    createdAt: attachment.createdAt,
+    redaction: attachment.redaction,
+    dataBase64: attachment.dataBase64,
+    checksumSha256,
+  };
+}
+
 function validateAttachment(attachment) {
   if (!attachment || typeof attachment !== "object") throw new Error(t("invalidVault"));
   if (!isNonEmptyBoundedString(attachment.id, 120)) throw new Error(t("invalidVault"));
@@ -945,18 +984,13 @@ function validateAttachment(attachment) {
   if (!isNonEmptyBoundedString(attachment.createdAt, 80)) throw new Error(t("invalidVault"));
   if (!["safe", "trusted", "secret"].includes(attachment.redaction)) throw new Error(t("invalidVault"));
   if (typeof attachment.dataBase64 !== "string") throw new Error(t("invalidVault"));
+  if (attachment.checksumSha256 && !/^[a-f0-9]{64}$/.test(attachment.checksumSha256)) {
+    throw new Error(t("invalidVault"));
+  }
   if (!isAllowedAttachmentMetadata(attachment)) throw new Error(t("invalidVault"));
   const decoded = decodeBase64Strict(attachment.dataBase64);
   if (decoded.byteLength !== attachment.size) throw new Error(t("invalidVault"));
-  return {
-    id: attachment.id,
-    name: attachment.name,
-    type: attachment.type,
-    size: attachment.size,
-    createdAt: attachment.createdAt,
-    redaction: attachment.redaction,
-    dataBase64: attachment.dataBase64,
-  };
+  return { bytes: decoded };
 }
 
 function isNonEmptyBoundedString(value, maxLength) {
@@ -977,6 +1011,15 @@ function decodeBase64Strict(value) {
   } catch {
     throw new Error(t("invalidVault"));
   }
+}
+
+function normalizeRecordFields(fields) {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return {};
+  return Object.fromEntries(
+    Object.entries(fields)
+      .filter(([key, value]) => typeof key === "string" && typeof value === "string")
+      .map(([key, value]) => [key.slice(0, 80), value.slice(0, 500)]),
+  );
 }
 
 function renderChecklist() {
@@ -1059,6 +1102,7 @@ function renderDashboard() {
 }
 
 function renderRecords() {
+  revokePreviewObjectUrls();
   els.recordList.innerHTML = "";
   if (!vault?.records?.length) {
     const empty = document.createElement("p");
@@ -1113,20 +1157,35 @@ function renderRecords() {
         label.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
         const actions = document.createElement("span");
         actions.className = "attachment-actions";
+        const previewButton = document.createElement("button");
+        previewButton.className = "chip-action preview-attachment-button";
+        previewButton.type = "button";
+        const requiresReveal = record.sensitivity !== "safe" && !revealedPreviewIds.has(attachment.id);
+        const isActivePreview = activePreviewAttachmentId === attachment.id;
+        previewButton.textContent = isActivePreview ? t("hidePreview") : requiresReveal ? t("revealPreview") : t("previewAttachment");
+        previewButton.disabled = !canPreviewAttachment(attachment);
+        previewButton.addEventListener("click", () => toggleAttachmentPreview(record, attachment));
         const downloadButton = document.createElement("button");
-        downloadButton.className = "chip-action";
+        downloadButton.className = "chip-action download-attachment-button";
         downloadButton.type = "button";
         downloadButton.textContent = t("downloadAttachment");
         downloadButton.disabled = !canDownloadAttachment(attachment);
         downloadButton.addEventListener("click", () => downloadAttachment(attachment.id));
         const removeButton = document.createElement("button");
-        removeButton.className = "chip-action danger-text";
+        removeButton.className = "chip-action danger-text remove-attachment-button";
         removeButton.type = "button";
         removeButton.textContent = t("removeAttachment");
         removeButton.addEventListener("click", () => removeAttachmentFromRecord(record.id, attachment.id));
-        actions.append(downloadButton, removeButton);
+        actions.append(previewButton, downloadButton, removeButton);
         chip.append(label, actions);
         list.append(chip);
+        if (isActivePreview) {
+          const preview = document.createElement("div");
+          preview.className = "attachment-preview";
+          preview.textContent = t("previewAttachment");
+          list.append(preview);
+          renderAttachmentPreview(preview, attachment, record);
+        }
       });
       card.querySelector("div").append(list);
     }
@@ -1135,13 +1194,35 @@ function renderRecords() {
   renderDashboard();
 }
 
+function revokePreviewObjectUrls() {
+  previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  previewObjectUrls = new Map();
+}
+
+function toggleAttachmentPreview(record, attachment) {
+  if (!canPreviewAttachment(attachment)) {
+    toast(t("previewUnavailable"));
+    return;
+  }
+  if (activePreviewAttachmentId === attachment.id) {
+    activePreviewAttachmentId = "";
+    renderRecords();
+    return;
+  }
+  if (record.sensitivity !== "safe") {
+    revealedPreviewIds.add(attachment.id);
+  }
+  activePreviewAttachmentId = attachment.id;
+  renderRecords();
+}
+
 function renderExportPreview() {
   els.exportPreview.textContent = buildEmergencyPacket();
   renderImportAssistant();
 }
 
-function setVaultUnlocked(nextVault) {
-  vault = migrateVaultSchema(nextVault);
+async function setVaultUnlocked(nextVault) {
+  vault = await migrateVaultSchema(nextVault);
   isUnlocked = true;
   pendingImportSummary = "";
   els.familyName.value = vault.familyName || "";
@@ -1152,6 +1233,7 @@ function setVaultUnlocked(nextVault) {
 }
 
 function lockVault() {
+  clearAttachmentPreviews();
   vault = null;
   isUnlocked = false;
   activePassphrase = "";
@@ -1185,7 +1267,7 @@ async function deriveKey(passphrase, salt) {
 }
 
 async function encryptVault(data, passphrase) {
-  const normalized = migrateVaultSchema(data);
+  const normalized = await migrateVaultSchema(data);
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
@@ -1232,6 +1314,13 @@ function textToBase64(value) {
   return toBase64(new TextEncoder().encode(value));
 }
 
+async function sha256Hex(bytes) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function getRecordAttachments(record) {
   const ids = new Set(record.attachmentIds || []);
   return (vault?.attachments || []).filter((attachment) => ids.has(attachment.id));
@@ -1270,6 +1359,7 @@ async function fileToAttachment(file, redaction, projectedTotalBefore = getTotal
     createdAt: new Date().toISOString(),
     redaction,
     dataBase64: toBase64(bytes),
+    checksumSha256: await sha256Hex(bytes),
   };
 }
 
@@ -1289,21 +1379,90 @@ function canDownloadAttachment(attachment) {
   return Boolean(attachment?.name && attachment?.type && attachment?.dataBase64 && isValidAttachment(attachment));
 }
 
-function downloadAttachment(attachmentId) {
+function canPreviewAttachment(attachment) {
+  return Boolean(isUnlocked && canDownloadAttachment(attachment) && allowedAttachmentTypes.has(attachment.type));
+}
+
+async function verifyAttachmentIntegrity(attachment) {
+  const bytes = decodeBase64Strict(attachment.dataBase64);
+  if (bytes.byteLength !== attachment.size) throw new Error(t("brokenAttachment"));
+  const checksum = await sha256Hex(bytes);
+  if (attachment.checksumSha256 && checksum !== attachment.checksumSha256) {
+    throw new Error(t("checksumMismatch"));
+  }
+  return bytes;
+}
+
+async function downloadAttachment(attachmentId) {
   const attachment = getAttachmentById(attachmentId);
   if (!canDownloadAttachment(attachment)) {
     toast(t("brokenAttachment"));
     return;
   }
   try {
-    const blob = new Blob([fromBase64(attachment.dataBase64)], {
+    const bytes = await verifyAttachmentIntegrity(attachment);
+    const blob = new Blob([bytes], {
       type: attachment.type || "application/octet-stream",
     });
     downloadBlobFile(normalizeAttachmentFilename(attachment.name), blob);
     toast(t("attachmentDownloaded"));
   } catch (error) {
     console.warn(error);
-    toast(t("brokenAttachment"));
+    toast(error.message === t("checksumMismatch") ? t("checksumMismatch") : t("brokenAttachment"));
+  }
+}
+
+async function renderAttachmentPreview(container, attachment, record) {
+  container.textContent = "";
+  if (!canPreviewAttachment(attachment)) {
+    container.textContent = t("previewUnavailable");
+    return;
+  }
+  if (record.sensitivity !== "safe" && !revealedPreviewIds.has(attachment.id)) {
+    container.textContent = t("previewRequiresReveal");
+    return;
+  }
+  try {
+    const bytes = await verifyAttachmentIntegrity(attachment);
+    if (attachment.type === "text/plain") {
+      const previewBytes = bytes.slice(0, maxPreviewTextBytes);
+      const text = new TextDecoder().decode(previewBytes);
+      const pre = document.createElement("pre");
+      pre.textContent = text;
+      container.append(pre);
+      if (bytes.byteLength > maxPreviewTextBytes) {
+        const truncated = document.createElement("p");
+        truncated.textContent = t("previewTruncated");
+        container.append(truncated);
+      }
+      return;
+    }
+
+    const blob = new Blob([bytes], { type: attachment.type });
+    const url = URL.createObjectURL(blob);
+    previewObjectUrls.set(attachment.id, url);
+    if (attachment.type.startsWith("image/")) {
+      const image = document.createElement("img");
+      image.src = url;
+      image.alt = attachment.name;
+      container.append(image);
+      return;
+    }
+    if (attachment.type === "application/pdf") {
+      const object = document.createElement("object");
+      object.data = url;
+      object.type = "application/pdf";
+      object.setAttribute("aria-label", attachment.name);
+      const fallback = document.createElement("p");
+      fallback.textContent = t("previewUnavailable");
+      object.append(fallback);
+      container.append(object);
+      return;
+    }
+    container.textContent = t("previewUnavailable");
+  } catch (error) {
+    console.warn(error);
+    container.textContent = error.message === t("checksumMismatch") ? t("checksumMismatch") : t("brokenAttachment");
   }
 }
 
@@ -1319,8 +1478,16 @@ function normalizeAttachmentFilename(filename, fallback = "attachment") {
   return normalized || fallback;
 }
 
+function clearAttachmentPreviews() {
+  revokePreviewObjectUrls();
+  revealedPreviewIds = new Set();
+  activePreviewAttachmentId = "";
+}
+
 function removeAttachmentFromRecord(recordId, attachmentId) {
   if (!vault || !window.confirm(t("confirmRemoveAttachment"))) return;
+  if (activePreviewAttachmentId === attachmentId) activePreviewAttachmentId = "";
+  revealedPreviewIds.delete(attachmentId);
   vault.records = vault.records.map((record) =>
     record.id === recordId
       ? { ...record, attachmentIds: (record.attachmentIds || []).filter((id) => id !== attachmentId) }
@@ -1335,6 +1502,11 @@ function removeAttachmentFromRecord(recordId, attachmentId) {
 
 function deleteRecord(recordId) {
   if (!vault || !window.confirm(t("confirmDeleteRecord"))) return;
+  const record = vault.records.find((item) => item.id === recordId);
+  (record?.attachmentIds || []).forEach((attachmentId) => {
+    if (activePreviewAttachmentId === attachmentId) activePreviewAttachmentId = "";
+    revealedPreviewIds.delete(attachmentId);
+  });
   vault.records = vault.records.filter((record) => record.id !== recordId);
   pruneUnreferencedAttachments();
   touchVault();
@@ -1358,7 +1530,7 @@ async function saveEncrypted() {
   if (!vault || !activePassphrase) return;
   vault.updatedAt = new Date().toISOString();
   vault.backup = { ...(vault.backup || {}), lastSavedAt: new Date().toISOString() };
-  vault = migrateVaultSchema(vault);
+  vault = await migrateVaultSchema(vault);
   const encrypted = await encryptVault(vault, activePassphrase);
   localStorage.setItem(storageKey, JSON.stringify(encrypted));
   toast(t("saved"));
@@ -1368,7 +1540,7 @@ async function downloadEncrypted() {
   if (!vault || !activePassphrase) return;
   vault.updatedAt = new Date().toISOString();
   vault.backup = { ...(vault.backup || {}), lastDownloadedAt: new Date().toISOString() };
-  vault = migrateVaultSchema(vault);
+  vault = await migrateVaultSchema(vault);
   const encrypted = await encryptVault(vault, activePassphrase);
   const safeName = (vault.familyName || "family").toLowerCase().replace(/[^a-z0-9]+/g, "-");
   downloadTextFile(`${safeName}.emergencyvault.json`, JSON.stringify(encrypted, null, 2), "application/json");
@@ -1401,7 +1573,7 @@ async function downloadCurrentBackup() {
   if (vault && activePassphrase) {
     vault.updatedAt = new Date().toISOString();
     vault.backup = { ...(vault.backup || {}), lastDownloadedAt: new Date().toISOString() };
-    vault = migrateVaultSchema(vault);
+    vault = await migrateVaultSchema(vault);
     const encrypted = await encryptVault(vault, activePassphrase);
     const safeName = (vault.familyName || "family").toLowerCase().replace(/[^a-z0-9]+/g, "-");
     downloadTextFile(`${safeName}.before-import.emergencyvault.json`, JSON.stringify(encrypted, null, 2), "application/json");
@@ -1440,7 +1612,7 @@ async function importEncryptedVault(file) {
       return;
     }
     activePassphrase = els.passphrase.value;
-    setVaultUnlocked(decrypted);
+    await setVaultUnlocked(decrypted);
     localStorage.setItem(storageKey, JSON.stringify(envelope));
     importBackupReady = false;
     pendingImportSummary = "";
@@ -1448,7 +1620,7 @@ async function importEncryptedVault(file) {
     toast(importedSchemaVersion < vaultSchemaVersion ? `${t("migratedVault")}\n${t("importReady")}` : t("importReady"));
   } catch (error) {
     console.warn(error);
-    const knownImportMessages = new Set([t("invalidVault"), t("vaultTooLarge")]);
+    const knownImportMessages = new Set([t("invalidVault"), t("vaultTooLarge"), t("checksumMismatch")]);
     toast(knownImportMessages.has(error.message) ? error.message : t("wrongPassphrase"));
   }
 }
@@ -1602,23 +1774,24 @@ els.vaultForm.addEventListener("submit", async (event) => {
   if (stored) {
     try {
       const decrypted = await decryptVault(JSON.parse(stored), passphrase);
-      setVaultUnlocked(decrypted);
+  await setVaultUnlocked(decrypted);
       toast(t("createdVault"));
       return;
     } catch (error) {
       console.warn(error);
-      toast(t("wrongPassphrase"));
+      const knownUnlockMessages = new Set([t("invalidVault"), t("vaultTooLarge"), t("checksumMismatch")]);
+      toast(knownUnlockMessages.has(error.message) ? error.message : t("wrongPassphrase"));
       return;
     }
   }
-  setVaultUnlocked(defaultVault(els.familyName.value));
+  await setVaultUnlocked(defaultVault(els.familyName.value));
   toast(t("createdVault"));
 });
 
-els.seedDemoButton.addEventListener("click", () => {
+els.seedDemoButton.addEventListener("click", async () => {
   activePassphrase = els.passphrase.value || "demo passphrase";
   els.passphrase.value = activePassphrase;
-  setVaultUnlocked(demoVault());
+  await setVaultUnlocked(demoVault());
   toast(t("demoLoaded"));
 });
 
@@ -1639,6 +1812,7 @@ els.recordForm.addEventListener("submit", async (event) => {
       detail,
       sensitivity,
       attachmentIds: attachments.map((attachment) => attachment.id),
+      fields: {},
     });
     vault.updatedAt = new Date().toISOString();
     els.recordForm.reset();

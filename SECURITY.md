@@ -6,17 +6,28 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.4 MVP.
+- v0.5 MVP.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
 - Decrypted data is intended to stay in memory while the vault is unlocked.
 - Small attachments are encrypted in the same vault file, but they increase vault size and sensitive-data impact.
 - Attachment download and deletion require an unlocked vault.
+- Attachment preview requires an unlocked vault.
+- Trusted and full-vault attachment previews require an explicit reveal click.
 - Import replacement is guarded by a backup-first prompt when an existing vault is present.
 - Import validates attachment base64 decoding, decoded size matching, per-file size, decoded total size, filename length, non-empty IDs/names, and supported metadata before replacing the current vault.
+- Schema v3 stores `attachments[].checksumSha256`; migration computes it from decoded bytes and rejects mismatches when a checksum is present.
 - Attachment download filenames are normalized before being passed to the browser download API.
-- Redacted emergency packets must not include raw attachment bytes or `dataBase64`.
+- Redacted emergency packets must not include raw attachment bytes, preview text, Blob URLs, checksum values, or `dataBase64`.
+
+## Preview threat model / 미리보기 위협 모델
+
+- TXT preview must render with `textContent`, never HTML.
+- Image and PDF preview must use Blob URLs generated from verified decoded bytes.
+- Blob URLs must be revoked when previews rerender or the vault locks.
+- SVG preview is intentionally unsupported.
+- PDF preview depends on browser support and may fall back to download/open guidance.
 
 ## v0.4 test scope / v0.4 테스트 범위
 
@@ -24,11 +35,13 @@ This project handles sensitive household metadata. Please report security issues
 
 - Corrupt attachment base64 is rejected.
 - Attachment decoded size mismatch is rejected.
+- Attachment checksum mismatch is rejected.
 - Negative size and excessive filename metadata are rejected.
 - Decoded attachment total above 20MB is rejected.
 - Unsafe download filenames are normalized.
 - Encrypted import with invalid attachment metadata does not replace the current vault.
-- XSS-like record payloads are rendered as text, not HTML.
+- v2 vaults migrate to v3 with `records[].fields` and `attachments[].checksumSha256`.
+- XSS-like record and TXT preview payloads are rendered as text, not HTML.
 
 This test scope is not a replacement for a professional cryptography or browser security audit.
 
