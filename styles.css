@@ -439,6 +439,14 @@ button:focus-visible {
   background: var(--surface);
 }
 
+.record-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 8px;
+  flex-direction: column;
+}
+
 .record-card p {
   margin-top: 4px;
   font-size: 14px;
@@ -456,6 +464,7 @@ button:focus-visible {
   max-width: 100%;
   min-height: 28px;
   align-items: center;
+  gap: 6px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: #fff;
@@ -463,6 +472,43 @@ button:focus-visible {
   padding: 0 9px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.chip-action {
+  min-height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  padding: 0 7px;
+}
+
+.chip-action:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.danger-text {
+  color: #9d2b2b;
+}
+
+.button.small {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.button.danger {
+  border-color: #e7b8b8;
+  background: #fff7f7;
+  color: #9d2b2b;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .record-category {
@@ -581,6 +627,17 @@ button:focus-visible {
   .panel-header,
   .record-card {
     flex-direction: column;
+  }
+
+  .record-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .attachment-chip {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: var(--radius);
   }
 
   .topbar-actions,

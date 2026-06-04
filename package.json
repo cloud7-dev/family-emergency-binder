@@ -1,6 +1,6 @@
 {
   "name": "family-emergency-binder",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "A local-first encrypted emergency binder for families.",
   "type": "commonjs",

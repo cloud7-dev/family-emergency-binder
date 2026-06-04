@@ -12,6 +12,8 @@ This project handles sensitive household metadata. Please report security issues
 - No server upload by default.
 - Decrypted data is intended to stay in memory while the vault is unlocked.
 - Small attachments are encrypted in the same vault file, but they increase vault size and sensitive-data impact.
+- Attachment download and deletion require an unlocked vault.
+- Import replacement is guarded by a backup-first prompt when an existing vault is present.
 
 ## Do not store yet / 아직 저장하지 말 것
 
@@ -30,5 +32,5 @@ This project handles sensitive household metadata. Please report security issues
 - Export redaction.
 - Clipboard behavior.
 - Service worker cache scope.
-- Attachment restore and deletion paths.
+- Attachment restore and deletion hardening.
 - Backup-before-migrate flow.

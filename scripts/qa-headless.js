@@ -125,6 +125,20 @@ async function main() {
       expression: `
         (async () => {
           localStorage.clear();
+          window.confirm = () => true;
+          const capturedDownloads = [];
+          const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+          URL.createObjectURL = (blob) => {
+            window.__lastDownloadBlob = blob;
+            return originalCreateObjectURL(blob);
+          };
+          const originalAnchorClick = HTMLAnchorElement.prototype.click;
+          HTMLAnchorElement.prototype.click = function qaClick() {
+            if (this.download && window.__lastDownloadBlob) {
+              capturedDownloads.push({ name: this.download, type: window.__lastDownloadBlob.type, blob: window.__lastDownloadBlob });
+            }
+            return originalAnchorClick.call(this);
+          };
           const setValue = (selector, value) => {
             const node = document.querySelector(selector);
             node.value = value;
@@ -148,6 +162,46 @@ async function main() {
           document.querySelector('#saveVaultButton').click();
           await new Promise((resolve) => setTimeout(resolve, 700));
           const encrypted = localStorage.getItem('family-emergency-binder.encryptedVault');
+          document.querySelector('.attachment-chip .chip-action').click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const attachmentDownload = capturedDownloads.at(-1);
+          const attachmentDownloadText = attachmentDownload ? await attachmentDownload.blob.text() : '';
+          const importFilePrompt = new File([encrypted], 'qa.emergencyvault.json', { type: 'application/json' });
+          const promptTransfer = new DataTransfer();
+          promptTransfer.items.add(importFilePrompt);
+          const promptInput = document.querySelector('#importVaultInput');
+          promptInput.files = promptTransfer.files;
+          promptInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const backupButtonVisible = !document.querySelector('#downloadCurrentBackupButton').classList.contains('hidden');
+          const recordsBeforeBackup = document.querySelectorAll('.record-card').length;
+          document.querySelector('#downloadCurrentBackupButton').click();
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          const backupDownload = capturedDownloads.at(-1);
+          const importFileAfterBackup = new File([encrypted], 'qa.emergencyvault.json', { type: 'application/json' });
+          const afterBackupTransfer = new DataTransfer();
+          afterBackupTransfer.items.add(importFileAfterBackup);
+          promptInput.files = afterBackupTransfer.files;
+          promptInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const recordsAfterBackupImport = document.querySelectorAll('.record-card').length;
+          setValue('#passphrase', 'wrong passphrase');
+          const wrongTransfer = new DataTransfer();
+          wrongTransfer.items.add(new File([encrypted], 'qa.emergencyvault.json', { type: 'application/json' }));
+          promptInput.files = wrongTransfer.files;
+          promptInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const recordsAfterWrongImport = document.querySelectorAll('.record-card').length;
+          setValue('#passphrase', 'correct horse battery staple');
+          document.querySelector('.attachment-chip .danger-text').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const attachmentChipsAfterRemove = document.querySelectorAll('.attachment-chip').length;
+          document.querySelector('.delete-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const recordsAfterDelete = document.querySelectorAll('.record-card').length;
+          document.querySelector('#markRecoveryTestButton').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const recoveryMarked = document.querySelector('#exportPreview').textContent.includes('Recovery test') || document.querySelector('#exportPreview').textContent.includes('복구 테스트');
           document.querySelector('#lockButton').click();
           await new Promise((resolve) => setTimeout(resolve, 80));
           localStorage.removeItem('family-emergency-binder.encryptedVault');
@@ -173,6 +227,16 @@ async function main() {
             score: document.querySelector('#readinessScore').textContent,
             records: document.querySelectorAll('.record-card').length,
             attachmentChips: document.querySelectorAll('.attachment-chip').length,
+            attachmentDownloadName: attachmentDownload?.name || '',
+            attachmentDownloadText,
+            backupButtonVisible,
+            backupDownloadName: backupDownload?.name || '',
+            recordsBeforeBackup,
+            recordsAfterBackupImport,
+            recordsAfterWrongImport,
+            attachmentChipsAfterRemove,
+            recordsAfterDelete,
+            recoveryMarked,
             packetMentionsAttachment: packet.includes('qa-note.txt') || packet.includes('demo-medical-note.txt'),
             packetLeaksAttachmentData: packet.includes('tiny attachment contents') || packet.includes('dataBase64'),
             encryptedEnvelope: envelope ? {
@@ -247,10 +311,20 @@ async function main() {
       qa.encryptedEnvelope.schemaVersion !== 2 ||
       qa.records < 5 ||
       qa.attachmentChips < 2 ||
+      qa.attachmentDownloadName !== "qa-note.txt" ||
+      qa.attachmentDownloadText !== "tiny attachment contents" ||
+      !qa.backupButtonVisible ||
+      !qa.backupDownloadName.endsWith(".before-import.emergencyvault.json") ||
+      qa.recordsBeforeBackup !== 5 ||
+      qa.recordsAfterBackupImport !== 5 ||
+      qa.recordsAfterWrongImport !== 5 ||
+      qa.attachmentChipsAfterRemove !== 1 ||
+      qa.recordsAfterDelete !== 4 ||
+      !qa.recoveryMarked ||
       !qa.packetMentionsAttachment ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v2") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v3") ||
       !qa.offlineShell?.hasShell ||
       qa.score !== "60%"
     ) {

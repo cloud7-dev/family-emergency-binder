@@ -11,6 +11,9 @@ It is built for families who want a practical digital emergency binder without c
 - Track readiness across documents, medical info, insurance, contacts, and recovery hints / 중요 문서, 의료, 보험, 비상 연락처, 복구 힌트 준비 상태 추적
 - Add records with sensitivity levels: safe to print, trusted family, full vault only / 출력 가능, 신뢰 가족, 전체 vault 전용 민감도 지정
 - Attach small encrypted files to records: PDF, PNG, JPG, WebP, and TXT / PDF, PNG, JPG, WebP, TXT 소형 파일을 기록에 암호화 첨부
+- Download or remove attachments after unlocking the vault / vault를 연 뒤 첨부파일 다운로드 또는 제거
+- Delete records and automatically prune unused attachments / 기록 삭제와 미사용 첨부파일 자동 정리
+- Backup-before-import assistant to avoid replacing a vault without a current copy / 현재 사본 없이 vault를 교체하지 않도록 돕는 백업 우선 가져오기
 - Preview, print, and download a redacted emergency packet / 가려진 비상 패킷 미리보기, 인쇄, 다운로드
 - Download a recovery worksheet without exposing the passphrase / passphrase를 노출하지 않는 복구 안내서 다운로드
 - Switch UI language across eight locales / 8개 언어 UI 전환
@@ -23,6 +26,7 @@ Schema v2 stores attachments inside the same encrypted vault JSON as base64 data
 - Allowed types: PDF, PNG, JPG/JPEG, WebP, TXT / 허용 타입: PDF, PNG, JPG/JPEG, WebP, TXT
 - Limit: 5MB per file, 20MB total attachment data per vault / 제한: 파일당 5MB, vault 전체 첨부 20MB
 - Redacted emergency packets show attachment names and sizes only. Raw attachment data is never included in the printable packet. / 가려진 비상 패킷에는 첨부 파일명과 크기만 표시되며 원문 데이터는 포함되지 않습니다.
+- Attachment downloads are available only while the vault is unlocked. / 첨부파일 다운로드는 vault가 열린 상태에서만 가능합니다.
 - v1 vault imports are migrated in memory and exported as v2 on the next save or download. / v1 vault는 메모리에서 v2로 변환되고 다음 저장 또는 다운로드부터 v2로 내보냅니다.
 
 ## Supported Languages / 지원 언어
@@ -81,8 +85,8 @@ See [SECURITY.md](./SECURITY.md), [docs/en/security.md](./docs/en/security.md), 
 ## Roadmap / 로드맵
 
 - Argon2id support where practical / 가능한 환경에서 Argon2id 지원
-- Downloadable attachment restore flow / 첨부파일 복원 다운로드 흐름
-- Backup-before-migrate import assistant / 백업 우선 import assistant
+- Attachment preview for images and text / 이미지와 텍스트 첨부파일 미리보기
+- Optional backup-before-migrate export copy / 선택형 migration 전 백업 사본
 - Translation contribution files and glossary / 번역 기여 파일과 용어집
 - Accessibility pass for all supported languages / 지원 언어 전체 접근성 점검
 - External security review / 외부 보안 리뷰

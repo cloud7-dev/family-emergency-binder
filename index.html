@@ -199,6 +199,12 @@
               <button id="downloadRecoveryButton" class="button secondary" type="button" data-i18n="downloadRecovery">
                 Recovery sheet
               </button>
+              <button id="markRecoveryTestButton" class="button secondary" type="button" data-i18n="markRecoveryTest">
+                Mark recovery test
+              </button>
+              <button id="downloadCurrentBackupButton" class="button secondary hidden" type="button" data-i18n="downloadCurrentBackup">
+                Download current backup
+              </button>
               <button id="printPacketButton" class="button secondary" type="button" data-i18n="printPacket">
                 Print packet
               </button>
@@ -219,7 +225,12 @@
           <h3></h3>
           <p></p>
         </div>
-        <span class="record-sensitivity"></span>
+        <div class="record-actions">
+          <span class="record-sensitivity"></span>
+          <button class="button danger small delete-record-button" type="button" data-i18n="deleteRecord">
+            Delete record
+          </button>
+        </div>
       </article>
     </template>
 

@@ -70,11 +70,26 @@ const translations = {
     attachmentLimits: "Attachments are encrypted inside the vault. Limit: 5MB per file, 20MB total.",
     attachmentSummary: "Attachment",
     attachmentHidden: "attachment data redacted",
+    downloadAttachment: "Download",
+    removeAttachment: "Remove",
+    deleteRecord: "Delete record",
+    confirmDeleteRecord: "Delete this record and unused attachments?",
+    confirmRemoveAttachment: "Remove this attachment from the record?",
+    attachmentDownloaded: "Attachment downloaded.",
+    attachmentRemoved: "Attachment removed.",
+    recordDeleted: "Record deleted.",
+    brokenAttachment: "Attachment data is missing or corrupted.",
     fileTooLarge: "File is too large. Limit is 5MB per file.",
     vaultTooLarge: "Vault attachments are too large. Limit is 20MB total.",
     unsupportedFile: "Unsupported file type. Use PDF, PNG, JPG, WebP, or TXT.",
     invalidVault: "This does not look like a Family Emergency Binder vault.",
     migratedVault: "Imported older vault schema and upgraded it in memory.",
+    downloadCurrentBackup: "Download current backup",
+    backupBeforeImport: "Download the current vault backup before replacing it.",
+    backupDownloadedImportAgain: "Current vault backup downloaded. Select the import file again to replace the vault.",
+    importPreview: "Import preview",
+    markRecoveryTest: "Mark recovery test",
+    recoveryTestMarked: "Recovery test date updated.",
     packetDownloaded: "Redacted emergency packet downloaded.",
     recoveryDownloaded: "Recovery worksheet downloaded.",
     emptyRecords: "Unlock a vault and add the first emergency record.",
@@ -161,11 +176,26 @@ const translations = {
     attachmentLimits: "첨부파일은 vault 안에 암호화됩니다. 제한: 파일당 5MB, 전체 20MB.",
     attachmentSummary: "첨부",
     attachmentHidden: "첨부 원문 가림",
+    downloadAttachment: "다운로드",
+    removeAttachment: "제거",
+    deleteRecord: "기록 삭제",
+    confirmDeleteRecord: "이 기록과 사용하지 않는 첨부파일을 삭제할까요?",
+    confirmRemoveAttachment: "이 첨부파일을 기록에서 제거할까요?",
+    attachmentDownloaded: "첨부파일을 다운로드했습니다.",
+    attachmentRemoved: "첨부파일을 제거했습니다.",
+    recordDeleted: "기록을 삭제했습니다.",
+    brokenAttachment: "첨부파일 데이터가 없거나 손상되었습니다.",
     fileTooLarge: "파일이 너무 큽니다. 파일당 5MB까지 가능합니다.",
     vaultTooLarge: "vault 첨부파일이 너무 큽니다. 전체 20MB까지 가능합니다.",
     unsupportedFile: "지원하지 않는 파일 형식입니다. PDF, PNG, JPG, WebP, TXT를 사용하세요.",
     invalidVault: "Family Emergency Binder vault 형식이 아닙니다.",
     migratedVault: "이전 vault schema를 가져와 메모리에서 업그레이드했습니다.",
+    downloadCurrentBackup: "현재 백업 다운로드",
+    backupBeforeImport: "vault를 교체하기 전에 현재 vault 백업을 먼저 다운로드하세요.",
+    backupDownloadedImportAgain: "현재 vault 백업을 다운로드했습니다. 가져올 파일을 다시 선택하면 vault가 교체됩니다.",
+    importPreview: "가져오기 미리보기",
+    markRecoveryTest: "복구 테스트 기록",
+    recoveryTestMarked: "복구 테스트 날짜를 업데이트했습니다.",
     packetDownloaded: "가려진 비상 패킷을 다운로드했습니다.",
     recoveryDownloaded: "복구 안내서를 다운로드했습니다.",
     emptyRecords: "vault를 열고 첫 비상 기록을 추가하세요.",
@@ -617,6 +647,8 @@ let currentLanguage = localStorage.getItem(languageKey) || "ko";
 let vault = null;
 let activePassphrase = "";
 let isUnlocked = false;
+let importBackupReady = false;
+let pendingImportSummary = "";
 
 const els = {
   languageSelect: document.querySelector("#languageSelect"),
@@ -642,6 +674,8 @@ const els = {
   importVaultInput: document.querySelector("#importVaultInput"),
   downloadPacketButton: document.querySelector("#downloadPacketButton"),
   downloadRecoveryButton: document.querySelector("#downloadRecoveryButton"),
+  markRecoveryTestButton: document.querySelector("#markRecoveryTestButton"),
+  downloadCurrentBackupButton: document.querySelector("#downloadCurrentBackupButton"),
   printPacketButton: document.querySelector("#printPacketButton"),
 };
 
@@ -866,6 +900,9 @@ function renderRecords() {
     card.querySelector(".record-category").textContent = t(record.category);
     card.querySelector("h3").textContent = record.title;
     card.querySelector("p").textContent = record.detail;
+    const deleteButton = card.querySelector(".delete-record-button");
+    deleteButton.textContent = t("deleteRecord");
+    deleteButton.addEventListener("click", () => deleteRecord(record.id));
     card.querySelector(".record-sensitivity").textContent =
       record.sensitivity === "safe"
         ? t("safeToPrint")
@@ -877,9 +914,22 @@ function renderRecords() {
       const list = document.createElement("div");
       list.className = "attachment-list";
       attachments.forEach((attachment) => {
-        const chip = document.createElement("span");
+        const chip = document.createElement("div");
         chip.className = "attachment-chip";
-        chip.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
+        const label = document.createElement("span");
+        label.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
+        const downloadButton = document.createElement("button");
+        downloadButton.className = "chip-action";
+        downloadButton.type = "button";
+        downloadButton.textContent = t("downloadAttachment");
+        downloadButton.disabled = !canDownloadAttachment(attachment);
+        downloadButton.addEventListener("click", () => downloadAttachment(attachment.id));
+        const removeButton = document.createElement("button");
+        removeButton.className = "chip-action danger-text";
+        removeButton.type = "button";
+        removeButton.textContent = t("removeAttachment");
+        removeButton.addEventListener("click", () => removeAttachmentFromRecord(record.id, attachment.id));
+        chip.append(label, downloadButton, removeButton);
         list.append(chip);
       });
       card.querySelector("div").append(list);
@@ -889,12 +939,16 @@ function renderRecords() {
 }
 
 function renderExportPreview() {
-  els.exportPreview.textContent = buildEmergencyPacket();
+  els.exportPreview.textContent = pendingImportSummary
+    ? `${t("backupBeforeImport")}\n${pendingImportSummary}\n\n${buildEmergencyPacket()}`
+    : buildEmergencyPacket();
+  renderImportAssistant();
 }
 
 function setVaultUnlocked(nextVault) {
   vault = migrateVaultSchema(nextVault);
   isUnlocked = true;
+  pendingImportSummary = "";
   els.familyName.value = vault.familyName || "";
   renderVaultState();
   renderChecklist();
@@ -906,6 +960,8 @@ function lockVault() {
   vault = null;
   isUnlocked = false;
   activePassphrase = "";
+  importBackupReady = false;
+  pendingImportSummary = "";
   els.passphrase.value = "";
   renderVaultState();
   renderRecords();
@@ -917,6 +973,7 @@ function renderVaultState() {
   els.vaultStateBadge.textContent = isUnlocked ? t("unlocked") : t("locked");
   els.vaultStateBadge.classList.toggle("warning", !isUnlocked);
   els.vaultStateBadge.classList.toggle("ready", isUnlocked);
+  if (els.markRecoveryTestButton) els.markRecoveryTestButton.disabled = !isUnlocked;
 }
 
 async function deriveKey(passphrase, salt) {
@@ -988,6 +1045,10 @@ function getTotalAttachmentBytes(attachments = vault?.attachments || []) {
   return attachments.reduce((total, attachment) => total + (attachment.size || 0), 0);
 }
 
+function getAttachmentById(attachmentId) {
+  return (vault?.attachments || []).find((attachment) => attachment.id === attachmentId) || null;
+}
+
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -1028,6 +1089,63 @@ async function readSelectedAttachments(redaction) {
   return attachments;
 }
 
+function canDownloadAttachment(attachment) {
+  return Boolean(attachment?.name && attachment?.type && attachment?.dataBase64);
+}
+
+function downloadAttachment(attachmentId) {
+  const attachment = getAttachmentById(attachmentId);
+  if (!canDownloadAttachment(attachment)) {
+    toast(t("brokenAttachment"));
+    return;
+  }
+  try {
+    const blob = new Blob([fromBase64(attachment.dataBase64)], {
+      type: attachment.type || "application/octet-stream",
+    });
+    downloadBlobFile(attachment.name, blob);
+    toast(t("attachmentDownloaded"));
+  } catch (error) {
+    console.warn(error);
+    toast(t("brokenAttachment"));
+  }
+}
+
+function removeAttachmentFromRecord(recordId, attachmentId) {
+  if (!vault || !window.confirm(t("confirmRemoveAttachment"))) return;
+  vault.records = vault.records.map((record) =>
+    record.id === recordId
+      ? { ...record, attachmentIds: (record.attachmentIds || []).filter((id) => id !== attachmentId) }
+      : record,
+  );
+  pruneUnreferencedAttachments();
+  touchVault();
+  renderRecords();
+  renderExportPreview();
+  toast(t("attachmentRemoved"));
+}
+
+function deleteRecord(recordId) {
+  if (!vault || !window.confirm(t("confirmDeleteRecord"))) return;
+  vault.records = vault.records.filter((record) => record.id !== recordId);
+  pruneUnreferencedAttachments();
+  touchVault();
+  renderRecords();
+  renderExportPreview();
+  toast(t("recordDeleted"));
+}
+
+function pruneUnreferencedAttachments() {
+  if (!vault) return;
+  const referenced = new Set(vault.records.flatMap((record) => record.attachmentIds || []));
+  vault.attachments = (vault.attachments || []).filter((attachment) => referenced.has(attachment.id));
+}
+
+function touchVault() {
+  if (!vault) return;
+  vault.updatedAt = new Date().toISOString();
+}
+
 async function saveEncrypted() {
   if (!vault || !activePassphrase) return;
   vault.updatedAt = new Date().toISOString();
@@ -1049,6 +1167,45 @@ async function downloadEncrypted() {
   toast(t("downloaded"));
 }
 
+function hasExistingVaultForImport() {
+  return Boolean(vault || localStorage.getItem(storageKey));
+}
+
+function buildImportPreview(importedVault, envelope) {
+  return [
+    `${t("importPreview")}: ${importedVault.familyName || t("appName")}`,
+    `Schema: ${envelope.schemaVersion || envelope.version || 1}`,
+    `Updated: ${formatDate(importedVault.updatedAt)}`,
+    `Records: ${(importedVault.records || []).length}`,
+    `Attachments: ${(importedVault.attachments || []).length}`,
+  ].join("\n");
+}
+
+function renderImportAssistant() {
+  if (!els.downloadCurrentBackupButton) return;
+  els.downloadCurrentBackupButton.classList.toggle("hidden", !pendingImportSummary);
+}
+
+async function downloadCurrentBackup() {
+  if (vault && activePassphrase) {
+    vault.updatedAt = new Date().toISOString();
+    vault.backup = { ...(vault.backup || {}), lastDownloadedAt: new Date().toISOString() };
+    vault = migrateVaultSchema(vault);
+    const encrypted = await encryptVault(vault, activePassphrase);
+    const safeName = (vault.familyName || "family").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    downloadTextFile(`${safeName}.before-import.emergencyvault.json`, JSON.stringify(encrypted, null, 2), "application/json");
+  } else {
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return;
+    downloadTextFile("current.before-import.emergencyvault.json", stored, "application/json");
+  }
+  importBackupReady = true;
+  pendingImportSummary = "";
+  renderImportAssistant();
+  renderExportPreview();
+  toast(t("backupDownloadedImportAgain"));
+}
+
 async function importEncryptedVault(file) {
   if (!els.passphrase.value) {
     toast(t("importNeedsPassphrase"));
@@ -1066,9 +1223,17 @@ async function importEncryptedVault(file) {
   try {
     const importedSchemaVersion = envelope.schemaVersion || envelope.version || 1;
     const decrypted = await decryptVault(envelope, els.passphrase.value);
+    if (hasExistingVaultForImport() && !importBackupReady) {
+      pendingImportSummary = buildImportPreview(decrypted, envelope);
+      renderExportPreview();
+      return;
+    }
     activePassphrase = els.passphrase.value;
     setVaultUnlocked(decrypted);
     localStorage.setItem(storageKey, JSON.stringify(envelope));
+    importBackupReady = false;
+    pendingImportSummary = "";
+    renderImportAssistant();
     toast(importedSchemaVersion < vaultSchemaVersion ? `${t("migratedVault")}\n${t("importReady")}` : t("importReady"));
   } catch (error) {
     console.warn(error);
@@ -1129,6 +1294,10 @@ function formatDate(value) {
 
 function downloadTextFile(filename, content, type = "text/plain") {
   const blob = new Blob([content], { type });
+  downloadBlobFile(filename, blob);
+}
+
+function downloadBlobFile(filename, blob) {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
@@ -1148,6 +1317,14 @@ function downloadRecoveryWorksheet() {
   const safeName = (vault.familyName || "family").toLowerCase().replace(/[^a-z0-9]+/g, "-");
   downloadTextFile(`${safeName}.recovery-worksheet.txt`, buildRecoveryWorksheet());
   toast(t("recoveryDownloaded"));
+}
+
+function markRecoveryTest() {
+  if (!vault) return;
+  vault.backup = { ...(vault.backup || {}), lastRecoveryTestAt: new Date().toISOString() };
+  touchVault();
+  renderExportPreview();
+  toast(t("recoveryTestMarked"));
 }
 
 function printPacket() {
@@ -1220,6 +1397,8 @@ els.saveVaultButton.addEventListener("click", saveEncrypted);
 els.downloadVaultButton.addEventListener("click", downloadEncrypted);
 els.downloadPacketButton.addEventListener("click", downloadPacket);
 els.downloadRecoveryButton.addEventListener("click", downloadRecoveryWorksheet);
+els.markRecoveryTestButton.addEventListener("click", markRecoveryTest);
+els.downloadCurrentBackupButton.addEventListener("click", downloadCurrentBackup);
 els.printPacketButton.addEventListener("click", printPacket);
 els.lockButton.addEventListener("click", lockVault);
 els.importVaultInput.addEventListener("change", (event) => {
