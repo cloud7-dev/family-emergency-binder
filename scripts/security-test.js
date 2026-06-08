@@ -222,6 +222,18 @@ async function main() {
             document.querySelector('.attachment-preview').textContent.includes('<script>') &&
             !document.querySelector('.attachment-preview script');
 
+          document.querySelector('.edit-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          setValue('.record-edit-panel [name="title"]', '<b>edited title<\\/b>');
+          setValue('.record-edit-panel [data-edit-field-key="location"]', '<iframe src=x>');
+          document.querySelector('.save-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 160));
+          const editXssTextOnly =
+            document.querySelector('.record-card h3').textContent.includes('<b>edited title') &&
+            !document.querySelector('.record-card h3 b') &&
+            document.querySelector('.field-summary').textContent.includes('<iframe') &&
+            !document.querySelector('.field-summary iframe');
+
           const rawEncrypt = async (data) => {
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -269,6 +281,7 @@ async function main() {
             v2MigrationAddsV3Foundation,
             filenameNormalized,
             xssTextOnly,
+            editXssTextOnly,
             invalidImportRejected,
             packetRedacted,
           };

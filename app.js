@@ -108,6 +108,11 @@ const translations = {
     attachmentDownloaded: "Attachment downloaded.",
     attachmentRemoved: "Attachment removed.",
     recordDeleted: "Record deleted.",
+    editRecord: "Edit",
+    editRecordTitle: "Edit record",
+    saveChanges: "Save changes",
+    cancel: "Cancel",
+    changesSaved: "Record changes saved.",
     markReviewed: "Mark reviewed",
     reviewedMarked: "Record review date updated.",
     lastReviewed: "Last reviewed",
@@ -270,6 +275,11 @@ const translations = {
     attachmentDownloaded: "첨부파일을 다운로드했습니다.",
     attachmentRemoved: "첨부파일을 제거했습니다.",
     recordDeleted: "기록을 삭제했습니다.",
+    editRecord: "수정",
+    editRecordTitle: "기록 수정",
+    saveChanges: "변경 저장",
+    cancel: "취소",
+    changesSaved: "기록 변경사항을 저장했습니다.",
     markReviewed: "검토 완료 표시",
     reviewedMarked: "기록 검토 날짜를 업데이트했습니다.",
     lastReviewed: "마지막 검토",
@@ -811,6 +821,7 @@ let recordSensitivityFilter = "all";
 let activePreviewAttachmentId = "";
 let revealedPreviewIds = new Set();
 let previewObjectUrls = new Map();
+let editingRecordId = "";
 
 const els = {
   languageSelect: document.querySelector("#languageSelect"),
@@ -1351,6 +1362,12 @@ function renderRecords() {
     const reviewButton = card.querySelector(".mark-reviewed-button");
     reviewButton.textContent = t("markReviewed");
     reviewButton.addEventListener("click", () => markRecordReviewed(record.id));
+    const editButton = card.querySelector(".edit-record-button");
+    editButton.textContent = t("editRecord");
+    editButton.addEventListener("click", () => {
+      editingRecordId = editingRecordId === record.id ? "" : record.id;
+      renderRecords();
+    });
     const reviewStatus = getRecordReviewStatus(record);
     const reviewBadge = card.querySelector(".review-status");
     reviewBadge.className = `review-status ${reviewStatus}`;
@@ -1408,9 +1425,131 @@ function renderRecords() {
       });
       card.querySelector("div").append(list);
     }
+    if (editingRecordId === record.id) renderRecordEditPanel(card, record);
     els.recordList.append(card);
   });
   renderDashboard();
+}
+
+function renderRecordEditPanel(card, record) {
+  const panel = document.createElement("form");
+  panel.className = "record-edit-panel";
+  panel.dataset.recordId = record.id;
+
+  const heading = document.createElement("strong");
+  heading.textContent = t("editRecordTitle");
+  panel.append(heading);
+
+  const categoryField = buildEditSelect("category", t("category"), record.category, categoryKeys.map((key) => [key, t(key)]));
+  const titleField = buildEditInput("title", t("title"), record.title);
+  const detailField = buildEditInput("detail", t("detail"), record.detail);
+  const sensitivityField = buildEditSelect("sensitivity", t("sensitivity"), record.sensitivity, [
+    ["safe", t("safeToPrint")],
+    ["trusted", t("trustedFamily")],
+    ["secret", t("fullVaultOnly")],
+  ]);
+  const fieldsGrid = document.createElement("div");
+  fieldsGrid.className = "record-edit-fields";
+
+  const renderEditFields = (category) => {
+    fieldsGrid.textContent = "";
+    (structuredFieldDefinitions[category] || []).forEach(([key, labelKey, type = "text"]) => {
+      fieldsGrid.append(buildEditInput(key, t(labelKey), record.fields?.[key] || "", type, true));
+    });
+  };
+  const categorySelect = categoryField.querySelector("select");
+  categorySelect.addEventListener("change", () => renderEditFields(categorySelect.value));
+  renderEditFields(record.category);
+
+  const actions = document.createElement("div");
+  actions.className = "record-edit-actions";
+  const save = document.createElement("button");
+  save.className = "button primary small save-record-button";
+  save.type = "submit";
+  save.textContent = t("saveChanges");
+  const cancel = document.createElement("button");
+  cancel.className = "button secondary small cancel-record-button";
+  cancel.type = "button";
+  cancel.textContent = t("cancel");
+  cancel.addEventListener("click", () => {
+    editingRecordId = "";
+    renderRecords();
+  });
+  actions.append(save, cancel);
+
+  panel.append(categoryField, titleField, detailField, sensitivityField, fieldsGrid, actions);
+  panel.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveRecordEdits(record.id, panel);
+  });
+  card.append(panel);
+}
+
+function buildEditInput(name, labelText, value = "", type = "text", isStructured = false) {
+  const label = document.createElement("label");
+  label.className = "field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  const input = document.createElement("input");
+  input.name = name;
+  input.type = type;
+  input.value = value;
+  input.autocomplete = "off";
+  if (isStructured) input.dataset.editFieldKey = name;
+  label.append(span, input);
+  return label;
+}
+
+function buildEditSelect(name, labelText, value, options) {
+  const label = document.createElement("label");
+  label.className = "field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  const select = document.createElement("select");
+  select.name = name;
+  options.forEach(([optionValue, optionLabel]) => {
+    const option = document.createElement("option");
+    option.value = optionValue;
+    option.textContent = optionLabel;
+    select.append(option);
+  });
+  select.value = value;
+  label.append(span, select);
+  return label;
+}
+
+function saveRecordEdits(recordId, panel) {
+  if (!vault) return;
+  const existing = vault.records.find((record) => record.id === recordId);
+  if (!existing) return;
+  const title = panel.querySelector('[name="title"]').value.trim();
+  const detail = panel.querySelector('[name="detail"]').value.trim();
+  if (!title || !detail) return;
+  const nextFields = {};
+  panel.querySelectorAll("[data-edit-field-key]").forEach((input) => {
+    const key = input.dataset.editFieldKey;
+    const value = input.value.trim();
+    if (key && value) nextFields[key] = value;
+  });
+  if (existing.fields?.lastReviewedAt) nextFields.lastReviewedAt = existing.fields.lastReviewedAt;
+  vault.records = vault.records.map((record) =>
+    record.id === recordId
+      ? {
+          ...record,
+          category: panel.querySelector('[name="category"]').value,
+          title,
+          detail,
+          sensitivity: panel.querySelector('[name="sensitivity"]').value,
+          fields: normalizeRecordFields(nextFields),
+        }
+      : record,
+  );
+  editingRecordId = "";
+  touchVault();
+  renderChecklist();
+  renderRecords();
+  renderExportPreview();
+  toast(t("changesSaved"));
 }
 
 function renderFieldSummary(container, record) {
@@ -1491,6 +1630,7 @@ async function setVaultUnlocked(nextVault) {
 
 function lockVault() {
   clearAttachmentPreviews();
+  editingRecordId = "";
   vault = null;
   isUnlocked = false;
   activePassphrase = "";
@@ -1769,6 +1909,7 @@ function removeAttachmentFromRecord(recordId, attachmentId) {
 
 function deleteRecord(recordId) {
   if (!vault || !window.confirm(t("confirmDeleteRecord"))) return;
+  if (editingRecordId === recordId) editingRecordId = "";
   const record = vault.records.find((item) => item.id === recordId);
   (record?.attachmentIds || []).forEach((attachmentId) => {
     if (activePreviewAttachmentId === attachmentId) activePreviewAttachmentId = "";

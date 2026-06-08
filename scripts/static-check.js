@@ -28,6 +28,9 @@ const requiredStrings = [
   "categoryRequiredFields",
   "readStructuredFields",
   "markRecordReviewed",
+  "renderRecordEditPanel",
+  "saveRecordEdits",
+  "editingRecordId",
   "getReadinessSummary",
   "lastReviewedAt",
   "activePreviewAttachmentId",
@@ -80,6 +83,7 @@ for (const id of [
   "recordAttachment",
   "recordDetails",
   "mark-reviewed-button",
+  "edit-record-button",
   "recordSearch",
   "recordCategoryFilter",
   "recordSensitivityFilter",
@@ -100,9 +104,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.6.0") failures.push("Package version must be 0.6.0");
+if (pkg.version !== "0.7.0") failures.push("Package version must be 0.7.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v6")) failures.push("Service worker cache must be v6");
+if (!sw.includes("family-emergency-binder-v7")) failures.push("Service worker cache must be v7");
 
 if (failures.length) {
   console.error(failures.join("\n"));

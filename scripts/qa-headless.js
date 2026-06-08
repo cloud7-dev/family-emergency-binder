@@ -172,18 +172,44 @@ async function main() {
             previewButtonAfterReveal.includes('닫기') ||
             previewButtonAfterReveal.includes('Hide preview');
           const fieldSummaryText = document.querySelector('.field-summary')?.textContent || '';
+          document.querySelector('.edit-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          document.querySelector('.record-edit-panel [name="title"]').value = 'Edited emergency card scan';
+          document.querySelector('.record-edit-panel [name="title"]').dispatchEvent(new Event('input', { bubbles: true }));
+          document.querySelector('.cancel-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const cancelKeptOriginalTitle = vault.records.some((record) => record.title === 'Emergency card scan');
+          document.querySelector('.edit-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          setValue('.record-edit-panel [name="title"]', 'Edited emergency card scan');
+          setValue('.record-edit-panel [name="detail"]', 'Edited trusted detail must stay out of packet');
+          setValue('.record-edit-panel [name="category"]', 'insurance');
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          setValue('.record-edit-panel [data-edit-field-key="provider"]', 'Edited insurer');
+          setValue('.record-edit-panel [data-edit-field-key="policyType"]', 'Emergency policy');
+          setValue('.record-edit-panel [data-edit-field-key="policyNumberHint"]', 'Do not print this policy hint');
+          document.querySelector('.save-record-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 180));
+          const editedRecord = vault.records.find((record) => record.title === 'Edited emergency card scan');
+          const editSaved =
+            editedRecord?.category === 'insurance' &&
+            editedRecord?.detail === 'Edited trusted detail must stay out of packet' &&
+            editedRecord?.fields?.provider === 'Edited insurer' &&
+            editedRecord?.fields?.policyType === 'Emergency policy' &&
+            !('location' in editedRecord.fields) &&
+            !editedRecord.fields?.lastReviewedAt;
           document.querySelector('#saveVaultButton').click();
           await new Promise((resolve) => setTimeout(resolve, 700));
           const encrypted = localStorage.getItem('family-emergency-binder.encryptedVault');
           const currentVaultShape = {
             version: vault.version,
             recordsHaveFields: vault.records.every((record) => record.fields && typeof record.fields === 'object'),
-            recordsHaveStructuredValues: vault.records.some((record) => record.fields?.location === 'Shelter folder'),
+            recordsHaveStructuredValues: vault.records.some((record) => record.fields?.provider === 'Edited insurer'),
             attachmentsHaveChecksums: vault.attachments.every((attachment) => /^[a-f0-9]{64}$/.test(attachment.checksumSha256 || '')),
           };
           document.querySelector('.mark-reviewed-button').click();
           await new Promise((resolve) => setTimeout(resolve, 140));
-          const reviewedRecordHasTimestamp = vault.records.some((record) => record.title === 'Emergency card scan' && /^\\d{4}-\\d{2}-\\d{2}T/.test(record.fields?.lastReviewedAt || ''));
+          const reviewedRecordHasTimestamp = vault.records.some((record) => record.title === 'Edited emergency card scan' && /^\\d{4}-\\d{2}-\\d{2}T/.test(record.fields?.lastReviewedAt || ''));
           document.querySelector('.download-attachment-button').click();
           await new Promise((resolve) => setTimeout(resolve, 150));
           const attachmentDownload = capturedDownloads.at(-1);
@@ -225,7 +251,7 @@ async function main() {
           const safeFilteredCount = document.querySelectorAll('.record-card').length;
           setValue('#recordSensitivityFilter', 'all');
           await new Promise((resolve) => setTimeout(resolve, 80));
-          setValue('#recordSearch', 'Shelter folder');
+          setValue('#recordSearch', 'Edited insurer');
           await new Promise((resolve) => setTimeout(resolve, 80));
           const searchFilteredCount = document.querySelectorAll('.record-card').length;
           const searchFilteredTitle = document.querySelector('.record-card h3')?.textContent || '';
@@ -272,6 +298,8 @@ async function main() {
             previewButtonShowsHide,
             currentVaultShape,
             reviewedRecordHasTimestamp,
+            cancelKeptOriginalTitle,
+            editSaved,
             dashboardReviewCounts: document.querySelector('#dashboardReviewCounts')?.textContent || '',
             fieldSummaryText,
             backupButtonVisible,
@@ -289,7 +317,7 @@ async function main() {
             recoveryMarked,
             packetMentionsAttachment: packet.includes('qa-note.txt') || packet.includes('demo-medical-note.txt'),
             packetIncludesSafeFields: packet.includes('Provider: Seoul Central Hospital') || packet.includes('기관/제공자: Seoul Central Hospital'),
-            packetLeaksTrustedFields: packet.includes('Shelter folder') || packet.includes('Password manager'),
+            packetLeaksTrustedFields: packet.includes('Shelter folder') || packet.includes('Edited insurer') || packet.includes('Do not print this policy hint') || packet.includes('Password manager'),
             packetLeaksAttachmentData: packet.includes('tiny attachment contents') || packet.includes('dataBase64'),
             encryptedEnvelope: envelope ? {
               app: envelope.app,
@@ -366,6 +394,8 @@ async function main() {
       !qa.currentVaultShape?.recordsHaveStructuredValues ||
       !qa.currentVaultShape?.attachmentsHaveChecksums ||
       !qa.reviewedRecordHasTimestamp ||
+      !qa.cancelKeptOriginalTitle ||
+      !qa.editSaved ||
       !qa.dashboardReviewCounts ||
       !qa.fieldSummaryText.includes("Shelter folder") ||
       qa.records < 5 ||
@@ -387,7 +417,7 @@ async function main() {
       qa.packetLeaksTrustedFields ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v6") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v7") ||
       !qa.offlineShell?.hasShell ||
       Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||
@@ -395,7 +425,7 @@ async function main() {
       qa.medicalFilteredCount < 1 ||
       qa.safeFilteredCount < 1 ||
       qa.searchFilteredCount !== 1 ||
-      qa.searchFilteredTitle !== "Emergency card scan"
+      qa.searchFilteredTitle !== "Edited emergency card scan"
     ) {
       throw new Error(`Unexpected QA result: ${JSON.stringify(qa)}`);
     }

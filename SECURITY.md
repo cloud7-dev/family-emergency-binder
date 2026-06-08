@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.6 MVP.
+- v0.7 MVP.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
@@ -20,6 +20,7 @@ This project handles sensitive household metadata. Please report security issues
 - Schema v3 stores `attachments[].checksumSha256`; migration computes it from decoded bytes and rejects mismatches when a checksum is present.
 - Attachment download filenames are normalized before being passed to the browser download API.
 - Structured fields are rendered as text, contribute to readiness, and can contain sensitive household metadata.
+- Inline record edit panels must save and rerender user-controlled text through text APIs, not HTML insertion.
 - Redacted emergency packets must not include raw attachment bytes, preview text, Blob URLs, checksum values, or `dataBase64`.
 - Redacted emergency packets include structured fields only for safe-to-print records.
 
@@ -50,7 +51,8 @@ This project handles sensitive household metadata. Please report security issues
 - Unsafe download filenames are normalized.
 - Encrypted import with invalid attachment metadata does not replace the current vault.
 - v2 vaults migrate to v3 with `records[].fields` and `attachments[].checksumSha256`.
-- Structured fields are saved, searched, reviewed, and rendered as text.
+- Structured fields are saved, edited, searched, reviewed, and rendered as text.
+- Edit cancel leaves the current vault unchanged.
 - Safe-to-print packet output excludes trusted/secret structured fields.
 - XSS-like record, structured field, and TXT preview payloads are rendered as text, not HTML.
 
