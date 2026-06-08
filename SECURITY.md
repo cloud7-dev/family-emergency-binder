@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.8 MVP.
+- v0.9 release candidate.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
@@ -24,6 +24,7 @@ This project handles sensitive household metadata. Please report security issues
 - Inline record edit panels must save and rerender user-controlled text through text APIs, not HTML insertion.
 - Redacted emergency packets must not include raw attachment bytes, preview text, Blob URLs, checksum values, or `dataBase64`.
 - Redacted emergency packets include structured fields only for safe-to-print records.
+- Export preview, backup verification, and record list updates use live regions or focusable summaries for accessibility.
 
 ## Preview threat model / 미리보기 위협 모델
 
@@ -39,6 +40,14 @@ This project handles sensitive household metadata. Please report security issues
 - Policy numbers, account identifiers, contact details, and recovery locations should be stored as hints unless the user intentionally trusts the full vault audience.
 - Trusted and full-vault-only records must not leak structured fields into the safe-to-print packet.
 - Review status and expiry dates are local helper signals, not legal, medical, or insurance advice.
+
+## v0.9 hardening checklist / v0.9 강화 체크리스트
+
+- User-controlled record, field, attachment, and preview data must not be rendered through non-empty `innerHTML` writes.
+- Encrypted envelopes are validated before being written to browser storage.
+- Lock clears edit state, preview state, and backup verification summary.
+- Import, verify, and decrypt failures use generic messages and must not echo sensitive vault contents.
+- Static and browser QA checks cover accessible control names, live export preview, focusable backup summary, desktop/mobile overflow, and offline shell cache.
 
 ## v0.6 test scope / v0.6 테스트 범위
 

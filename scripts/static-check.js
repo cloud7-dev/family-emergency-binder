@@ -44,6 +44,8 @@ const requiredStrings = [
   "verifyBackupFile",
   "renderBackupCheck",
   "lastVerifiedAt",
+  "isValidEncryptedEnvelope",
+  "serializeEncryptedEnvelope",
   "markRecoveryTest",
   "ReadyBinder",
   "recordSearch",
@@ -109,9 +111,21 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.8.0") failures.push("Package version must be 0.8.0");
+if (pkg.version !== "0.9.0") failures.push("Package version must be 0.9.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v8")) failures.push("Service worker cache must be v8");
+if (!sw.includes("family-emergency-binder-v9")) failures.push("Service worker cache must be v9");
+
+const unsafeInnerHtmlWrites = [...app.matchAll(/innerHTML\s*=\s*([^;\n]+)/g)]
+  .map((match) => match[0])
+  .filter((line) => !line.includes('innerHTML = ""'));
+if (unsafeInnerHtmlWrites.length) failures.push(`Unsafe innerHTML writes: ${unsafeInnerHtmlWrites.join(", ")}`);
+
+if (!html.includes('id="exportPreview" class="export-preview" aria-live="polite"')) {
+  failures.push("Export preview must be aria-live");
+}
+if (!html.includes('id="backupStatus" class="backup-status" tabindex="-1"')) {
+  failures.push("Backup status must be focusable");
+}
 
 if (failures.length) {
   console.error(failures.join("\n"));

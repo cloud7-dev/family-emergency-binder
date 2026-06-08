@@ -152,6 +152,7 @@ const translations = {
     verifyBackup: "Verify backup file",
     backupVerified: "Backup file verified without replacing the current vault.",
     backupVerifyFailed: "Backup verification failed. Current vault was not changed.",
+    verifySummaryFocused: "Backup verification summary updated.",
     lastVerified: "Last backup verification",
     recordCount: "Record count",
     attachmentTotal: "Attachment total",
@@ -327,6 +328,7 @@ const translations = {
     verifyBackup: "백업 파일 검증",
     backupVerified: "현재 vault를 교체하지 않고 백업 파일을 검증했습니다.",
     backupVerifyFailed: "백업 검증에 실패했습니다. 현재 vault는 변경하지 않았습니다.",
+    verifySummaryFocused: "백업 검증 요약을 업데이트했습니다.",
     lastVerified: "마지막 백업 검증",
     recordCount: "기록 수",
     attachmentTotal: "첨부 총량",
@@ -1220,6 +1222,7 @@ function renderChecklist() {
     const title = document.createElement("strong");
     title.textContent = t(key);
     const select = document.createElement("select");
+    select.setAttribute("aria-label", t(key));
     statuses.forEach((status) => {
       const option = document.createElement("option");
       option.value = status;
@@ -1389,6 +1392,7 @@ function renderRecords() {
     editButton.addEventListener("click", () => {
       editingRecordId = editingRecordId === record.id ? "" : record.id;
       renderRecords();
+      document.querySelector(`.record-edit-panel[data-record-id="${record.id}"] input`)?.focus();
     });
     const reviewStatus = getRecordReviewStatus(record);
     const reviewBadge = card.querySelector(".review-status");
@@ -1707,7 +1711,7 @@ async function encryptVault(data, passphrase) {
 }
 
 async function decryptVault(envelope, passphrase) {
-  if (!envelope || envelope.app !== "family-emergency-binder" || !envelope.salt || !envelope.iv || !envelope.ciphertext) {
+  if (!isValidEncryptedEnvelope(envelope)) {
     throw new Error(t("invalidVault"));
   }
   const salt = fromBase64(envelope.salt);
@@ -1716,6 +1720,24 @@ async function decryptVault(envelope, passphrase) {
   const key = await deriveKey(passphrase, salt);
   const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
   return migrateVaultSchema(JSON.parse(new TextDecoder().decode(plaintext)));
+}
+
+function isValidEncryptedEnvelope(envelope) {
+  return Boolean(
+    envelope &&
+      envelope.app === "family-emergency-binder" &&
+      (envelope.schemaVersion || envelope.version) <= vaultSchemaVersion &&
+      envelope.kdf === "PBKDF2-SHA256-250000" &&
+      envelope.cipher === "AES-GCM-256" &&
+      typeof envelope.salt === "string" &&
+      typeof envelope.iv === "string" &&
+      typeof envelope.ciphertext === "string",
+  );
+}
+
+function serializeEncryptedEnvelope(envelope) {
+  if (!isValidEncryptedEnvelope(envelope)) throw new Error(t("invalidVault"));
+  return JSON.stringify(envelope);
 }
 
 function toBase64(bytes) {
@@ -1965,7 +1987,7 @@ async function saveEncrypted() {
   vault.backup = { ...(vault.backup || {}), lastSavedAt: new Date().toISOString() };
   vault = await migrateVaultSchema(vault);
   const encrypted = await encryptVault(vault, activePassphrase);
-  localStorage.setItem(storageKey, JSON.stringify(encrypted));
+  localStorage.setItem(storageKey, serializeEncryptedEnvelope(encrypted));
   toast(t("saved"));
 }
 
@@ -2046,11 +2068,13 @@ async function verifyBackupFile(file) {
     }
     renderBackupCheck();
     renderExportPreview();
+    els.backupStatus?.focus();
     toast(t("backupVerified"));
   } catch (error) {
     console.warn(error);
     backupVerifySummary = t("backupVerifyFailed");
     renderBackupCheck();
+    els.backupStatus?.focus();
     toast(t("backupVerifyFailed"));
   }
 }
@@ -2099,7 +2123,7 @@ async function importEncryptedVault(file) {
     }
     activePassphrase = els.passphrase.value;
     await setVaultUnlocked(decrypted);
-    localStorage.setItem(storageKey, JSON.stringify(envelope));
+    localStorage.setItem(storageKey, serializeEncryptedEnvelope(envelope));
     importBackupReady = false;
     pendingImportSummary = "";
     renderImportAssistant();

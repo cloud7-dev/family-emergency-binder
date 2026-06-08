@@ -308,6 +308,16 @@ async function main() {
           await new Promise((resolve) => setTimeout(resolve, 80));
           const envelope = encrypted ? JSON.parse(encrypted) : null;
           const packet = document.querySelector('#exportPreview').textContent;
+          const unnamedControls = [...document.querySelectorAll('button, input, select')]
+            .filter((control) => {
+            if (control.type === 'hidden') return false;
+            const hasText = control.tagName === 'BUTTON' && control.textContent.trim();
+            const hasAria = control.getAttribute('aria-label');
+            const hasLabel = Boolean(control.closest('label') || (control.id && document.querySelector('label[for="' + control.id + '"]')));
+            return !Boolean(hasText || hasAria || hasLabel);
+          })
+          .map((control) => control.tagName.toLowerCase() + '#' + (control.id || control.name || control.className || 'unnamed'));
+          const controlsNamed = unnamedControls.length === 0;
           return {
             title: document.title,
             h1: document.querySelector('h1').textContent,
@@ -345,6 +355,10 @@ async function main() {
             packetIncludesSafeFields: packet.includes('Provider: Seoul Central Hospital') || packet.includes('기관/제공자: Seoul Central Hospital'),
             packetLeaksTrustedFields: packet.includes('Shelter folder') || packet.includes('Edited insurer') || packet.includes('Do not print this policy hint') || packet.includes('Password manager'),
             packetLeaksAttachmentData: packet.includes('tiny attachment contents') || packet.includes('dataBase64'),
+            controlsNamed,
+            unnamedControls,
+            exportPreviewLive: document.querySelector('#exportPreview')?.getAttribute('aria-live') === 'polite',
+            backupStatusFocusable: document.querySelector('#backupStatus')?.tabIndex === -1,
             encryptedEnvelope: envelope ? {
               app: envelope.app,
               version: envelope.version,
@@ -442,10 +456,13 @@ async function main() {
       !qa.packetIncludesSafeFields ||
       qa.packetLeaksTrustedFields ||
       qa.packetLeaksAttachmentData ||
+      !qa.controlsNamed ||
+      !qa.exportPreviewLive ||
+      !qa.backupStatusFocusable ||
       !qa.offline?.ready ||
       !qa.verifySuccess ||
       !qa.verifyWrongPreservedVault ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v8") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v9") ||
       !qa.offlineShell?.hasShell ||
       Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||

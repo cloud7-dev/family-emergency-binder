@@ -191,6 +191,8 @@ async function main() {
           const totalLimitRejected = await expectReject('total attachment limit', () =>
             migrateVaultSchema({ ...baseVault, records: [], attachments: largeAttachments })
           );
+          const invalidEnvelopeRejected =
+            !isValidEncryptedEnvelope({ app: 'family-emergency-binder', salt: 'x', iv: 'x', ciphertext: 'x' });
 
           const unsafeName = normalizeAttachmentFilename('../bad:name?.txt');
           const filenameNormalized =
@@ -278,6 +280,7 @@ async function main() {
             longNameRejected,
             checksumMismatchRejected,
             totalLimitRejected,
+            invalidEnvelopeRejected,
             v2MigrationAddsV3Foundation,
             filenameNormalized,
             xssTextOnly,

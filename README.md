@@ -106,14 +106,14 @@ npm run security:test
 - Verify a downloaded encrypted backup without replacing the current vault.
 - Reject wrong-passphrase import without replacing the current vault.
 - Search records, filter by category, filter by sensitivity, and use sidebar category navigation.
-- Render offline app shell from service worker cache `family-emergency-binder-v8`.
+- Render offline app shell from service worker cache `family-emergency-binder-v9`.
 - Keep redacted packet output free of attachment raw data and `dataBase64`.
 
 ## Known limitations / 알려진 제한
 
 - This MVP has not had an external security audit.
 - Attachments are stored as base64 inside one encrypted vault JSON, so this is not designed for large files.
-- Drag-and-drop, bulk ZIP export, Argon2id, cloud sync, OCR, external audit, and repo rename are out of v0.8 scope.
+- Drag-and-drop, bulk ZIP export, Argon2id, cloud sync, OCR, external audit, and repo rename are out of v0.9 scope.
 - PDF preview depends on browser support and can fall back to download/open behavior.
 - Browser local storage and downloads are still the user's backup responsibility.
 
@@ -122,6 +122,10 @@ npm run security:test
 `npm run security:test` loads the app in headless Chrome and checks corrupt attachment base64 rejection, decoded size mismatch rejection, checksum mismatch rejection, negative and excessive metadata rejection, decoded 20MB total limit enforcement, unsafe filename normalization, encrypted invalid-vault import rejection, v2-to-v3 migration, structured field rendering, and XSS payloads rendered as text in records, fields, and TXT previews.
 
 Backup verification decrypts a selected encrypted vault with the current passphrase, reports the decoded vault summary, and never replaces the current unlocked vault. / 백업 검증은 선택한 암호화 vault를 현재 passphrase로 복호화해 요약을 표시하며 현재 열려 있는 vault를 교체하지 않습니다.
+
+## Translation contributions / 번역 기여
+
+The app keeps UI strings in `app.js` and currently supports `ko`, `en`, `ja`, `zh-Hans`, `de`, `fr`, `it`, and `hi`. New UI strings should be added to English first, then mirrored across supported locales before release. / 앱 UI 문자열은 `app.js`에 있으며 현재 `ko`, `en`, `ja`, `zh-Hans`, `de`, `fr`, `it`, `hi`를 지원합니다. 새 UI 문자열은 영어에 먼저 추가한 뒤 릴리즈 전에 지원 언어 전체에 반영해야 합니다.
 
 ## Security Model / 보안 모델
 
@@ -146,7 +150,7 @@ See [SECURITY.md](./SECURITY.md), [docs/en/security.md](./docs/en/security.md), 
 ## Roadmap / 로드맵
 
 - Argon2id support where practical / 가능한 환경에서 Argon2id 지원
-- Accessibility, i18n, and security hardening / 접근성, 다국어, 보안 강화
+- v1.0 stable release packaging / v1.0 안정 릴리즈 패키징
 - Optional backup-before-migrate export copy / 선택형 migration 전 백업 사본
 - Translation contribution files and glossary / 번역 기여 파일과 용어집
 - Accessibility pass for all supported languages / 지원 언어 전체 접근성 점검
