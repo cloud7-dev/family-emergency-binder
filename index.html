@@ -10,7 +10,7 @@
     />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=11" />
+    <link rel="stylesheet" href="./styles.css?v=12" />
   </head>
   <body>
     <div class="app-shell">
@@ -257,6 +257,16 @@
             </div>
           </div>
           <div id="importStatus" class="inline-alert hidden" aria-live="polite"></div>
+          <div class="backup-panel" aria-live="polite">
+            <div>
+              <h3 data-i18n="backupCheck">Backup check</h3>
+              <div id="backupStatus" class="backup-status"></div>
+            </div>
+            <label class="button secondary file-button">
+              <span data-i18n="verifyBackup">Verify backup file</span>
+              <input id="verifyBackupInput" type="file" accept=".json,.emergencyvault,application/json" />
+            </label>
+          </div>
           <div id="exportPreview" class="export-preview"></div>
         </section>
       </main>
@@ -286,6 +296,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=11"></script>
+    <script src="./app.js?v=12"></script>
   </body>
 </html>

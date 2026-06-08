@@ -207,6 +207,30 @@ async function main() {
             recordsHaveStructuredValues: vault.records.some((record) => record.fields?.provider === 'Edited insurer'),
             attachmentsHaveChecksums: vault.attachments.every((attachment) => /^[a-f0-9]{64}$/.test(attachment.checksumSha256 || '')),
           };
+          const verifyInput = document.querySelector('#verifyBackupInput');
+          const verifyTransfer = new DataTransfer();
+          verifyTransfer.items.add(new File([encrypted], 'verify.emergencyvault.json', { type: 'application/json' }));
+          verifyInput.files = verifyTransfer.files;
+          verifyInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const verifySuccess =
+            /^\\d{4}-\\d{2}-\\d{2}T/.test(vault.backup?.lastVerifiedAt || '') &&
+            document.querySelector('#backupStatus').textContent.includes('Kim family') &&
+            document.querySelector('#backupStatus').textContent.includes('Schema') &&
+            document.querySelectorAll('.record-card').length === 5;
+          const lastVerifiedAfterSuccess = vault.backup.lastVerifiedAt;
+          setValue('#passphrase', 'wrong passphrase');
+          const verifyWrongTransfer = new DataTransfer();
+          verifyWrongTransfer.items.add(new File([encrypted], 'verify.emergencyvault.json', { type: 'application/json' }));
+          verifyInput.files = verifyWrongTransfer.files;
+          verifyInput.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          const verifyWrongPreservedVault =
+            document.querySelectorAll('.record-card').length === 5 &&
+            vault.backup.lastVerifiedAt === lastVerifiedAfterSuccess &&
+            (document.querySelector('#backupStatus').textContent.includes('failed') ||
+              document.querySelector('#backupStatus').textContent.includes('실패'));
+          setValue('#passphrase', 'correct horse battery staple');
           document.querySelector('.mark-reviewed-button').click();
           await new Promise((resolve) => setTimeout(resolve, 140));
           const reviewedRecordHasTimestamp = vault.records.some((record) => record.title === 'Edited emergency card scan' && /^\\d{4}-\\d{2}-\\d{2}T/.test(record.fields?.lastReviewedAt || ''));
@@ -297,6 +321,8 @@ async function main() {
             previewButtonAfterReveal,
             previewButtonShowsHide,
             currentVaultShape,
+            verifySuccess,
+            verifyWrongPreservedVault,
             reviewedRecordHasTimestamp,
             cancelKeptOriginalTitle,
             editSaved,
@@ -417,7 +443,9 @@ async function main() {
       qa.packetLeaksTrustedFields ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v7") ||
+      !qa.verifySuccess ||
+      !qa.verifyWrongPreservedVault ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v8") ||
       !qa.offlineShell?.hasShell ||
       Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||

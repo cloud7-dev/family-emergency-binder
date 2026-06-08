@@ -41,6 +41,9 @@ const requiredStrings = [
   "removeAttachmentFromRecord",
   "deleteRecord",
   "downloadCurrentBackup",
+  "verifyBackupFile",
+  "renderBackupCheck",
+  "lastVerifiedAt",
   "markRecoveryTest",
   "ReadyBinder",
   "recordSearch",
@@ -75,6 +78,8 @@ for (const value of requiredStrings) {
 
 for (const id of [
   "importVaultInput",
+  "verifyBackupInput",
+  "backupStatus",
   "downloadPacketButton",
   "downloadRecoveryButton",
   "markRecoveryTestButton",
@@ -104,9 +109,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.7.0") failures.push("Package version must be 0.7.0");
+if (pkg.version !== "0.8.0") failures.push("Package version must be 0.8.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v7")) failures.push("Service worker cache must be v7");
+if (!sw.includes("family-emergency-binder-v8")) failures.push("Service worker cache must be v8");
 
 if (failures.length) {
   console.error(failures.join("\n"));

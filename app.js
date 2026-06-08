@@ -148,6 +148,14 @@ const translations = {
     downloadCurrentBackup: "Download current backup",
     backupBeforeImport: "Download the current vault backup before replacing it.",
     backupDownloadedImportAgain: "Current vault backup downloaded. Select the import file again to replace the vault.",
+    backupCheck: "Backup check",
+    verifyBackup: "Verify backup file",
+    backupVerified: "Backup file verified without replacing the current vault.",
+    backupVerifyFailed: "Backup verification failed. Current vault was not changed.",
+    lastVerified: "Last backup verification",
+    recordCount: "Record count",
+    attachmentTotal: "Attachment total",
+    currentSchema: "Current schema",
     importPreview: "Import preview",
     markRecoveryTest: "Mark recovery test",
     recoveryTestMarked: "Recovery test date updated.",
@@ -315,6 +323,14 @@ const translations = {
     downloadCurrentBackup: "현재 백업 다운로드",
     backupBeforeImport: "vault를 교체하기 전에 현재 vault 백업을 먼저 다운로드하세요.",
     backupDownloadedImportAgain: "현재 vault 백업을 다운로드했습니다. 가져올 파일을 다시 선택하면 vault가 교체됩니다.",
+    backupCheck: "백업 확인",
+    verifyBackup: "백업 파일 검증",
+    backupVerified: "현재 vault를 교체하지 않고 백업 파일을 검증했습니다.",
+    backupVerifyFailed: "백업 검증에 실패했습니다. 현재 vault는 변경하지 않았습니다.",
+    lastVerified: "마지막 백업 검증",
+    recordCount: "기록 수",
+    attachmentTotal: "첨부 총량",
+    currentSchema: "현재 schema",
     importPreview: "가져오기 미리보기",
     markRecoveryTest: "복구 테스트 기록",
     recoveryTestMarked: "복구 테스트 날짜를 업데이트했습니다.",
@@ -814,6 +830,7 @@ let activePassphrase = "";
 let isUnlocked = false;
 let importBackupReady = false;
 let pendingImportSummary = "";
+let backupVerifySummary = "";
 let activeSection = "vault";
 let recordSearch = "";
 let recordCategoryFilter = "all";
@@ -846,6 +863,8 @@ const els = {
   saveVaultButton: document.querySelector("#saveVaultButton"),
   downloadVaultButton: document.querySelector("#downloadVaultButton"),
   importVaultInput: document.querySelector("#importVaultInput"),
+  verifyBackupInput: document.querySelector("#verifyBackupInput"),
+  backupStatus: document.querySelector("#backupStatus"),
   downloadPacketButton: document.querySelector("#downloadPacketButton"),
   downloadRecoveryButton: document.querySelector("#downloadRecoveryButton"),
   markRecoveryTestButton: document.querySelector("#markRecoveryTestButton"),
@@ -976,6 +995,7 @@ function defaultVault(familyName = "") {
       lastSavedAt: null,
       lastDownloadedAt: null,
       lastRecoveryTestAt: null,
+      lastVerifiedAt: null,
     },
     updatedAt: new Date().toISOString(),
   };
@@ -1067,6 +1087,7 @@ function demoVault() {
       lastSavedAt: null,
       lastDownloadedAt: null,
       lastRecoveryTestAt: new Date().toISOString(),
+      lastVerifiedAt: null,
     },
     updatedAt: new Date().toISOString(),
   };
@@ -1101,6 +1122,7 @@ async function migrateVaultSchema(input) {
       lastSavedAt: input.backup?.lastSavedAt || null,
       lastDownloadedAt: input.backup?.lastDownloadedAt || null,
       lastRecoveryTestAt: input.backup?.lastRecoveryTestAt || null,
+      lastVerifiedAt: input.backup?.lastVerifiedAt || null,
     },
     updatedAt: input.updatedAt || new Date().toISOString(),
   };
@@ -1615,6 +1637,7 @@ function toggleAttachmentPreview(record, attachment) {
 function renderExportPreview() {
   els.exportPreview.textContent = buildEmergencyPacket();
   renderImportAssistant();
+  renderBackupCheck();
 }
 
 async function setVaultUnlocked(nextVault) {
@@ -1636,6 +1659,7 @@ function lockVault() {
   activePassphrase = "";
   importBackupReady = false;
   pendingImportSummary = "";
+  backupVerifySummary = "";
   els.passphrase.value = "";
   renderVaultState();
   renderRecords();
@@ -1978,6 +2002,59 @@ function renderImportAssistant() {
   els.importStatus.textContent = pendingImportSummary ? `${t("backupBeforeImport")}\n${pendingImportSummary}` : "";
 }
 
+function renderBackupCheck() {
+  if (!els.backupStatus) return;
+  const lines = [
+    `${t("lastVerified")}: ${formatDate(vault?.backup?.lastVerifiedAt)}`,
+    `${t("saveLocal")}: ${formatDate(vault?.backup?.lastSavedAt)}`,
+    `${t("downloadVault")}: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
+    `${t("markRecoveryTest")}: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
+    `${t("recordCount")}: ${(vault?.records || []).length}`,
+    `${t("attachmentTotal")}: ${formatBytes(getTotalAttachmentBytes(vault?.attachments || []))}`,
+    `${t("currentSchema")}: ${vault?.version || vaultSchemaVersion}`,
+  ];
+  if (backupVerifySummary) lines.unshift(backupVerifySummary, "");
+  els.backupStatus.textContent = lines.join("\n");
+}
+
+function buildBackupVerifySummary(importedVault, envelope) {
+  return [
+    `${t("backupVerified")}`,
+    `${importedVault.familyName || t("appName")}`,
+    `Updated: ${formatDate(importedVault.updatedAt)}`,
+    `${t("recordCount")}: ${(importedVault.records || []).length}`,
+    `Attachments: ${(importedVault.attachments || []).length}`,
+    `Schema: ${envelope.schemaVersion || envelope.version || 1}`,
+  ].join("\n");
+}
+
+async function verifyBackupFile(file) {
+  const passphrase = els.passphrase.value || activePassphrase;
+  if (!passphrase) {
+    toast(t("importNeedsPassphrase"));
+    return;
+  }
+  let envelope;
+  try {
+    envelope = JSON.parse(await file.text());
+    if (!envelope || envelope.app !== "family-emergency-binder") throw new Error(t("invalidVault"));
+    const decrypted = await decryptVault(envelope, passphrase);
+    backupVerifySummary = buildBackupVerifySummary(decrypted, envelope);
+    if (vault) {
+      vault.backup = { ...(vault.backup || {}), lastVerifiedAt: new Date().toISOString() };
+      touchVault();
+    }
+    renderBackupCheck();
+    renderExportPreview();
+    toast(t("backupVerified"));
+  } catch (error) {
+    console.warn(error);
+    backupVerifySummary = t("backupVerifyFailed");
+    renderBackupCheck();
+    toast(t("backupVerifyFailed"));
+  }
+}
+
 async function downloadCurrentBackup() {
   if (vault && activePassphrase) {
     vault.updatedAt = new Date().toISOString();
@@ -2087,6 +2164,7 @@ function buildRecoveryWorksheet() {
     `Last local save: ${formatDate(vault?.backup?.lastSavedAt)}`,
     `Last vault download: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
     `Last recovery test: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
+    `Last backup verification: ${formatDate(vault?.backup?.lastVerifiedAt)}`,
     "",
     "Readiness summary:",
     "",
@@ -2290,6 +2368,11 @@ els.lockButton.addEventListener("click", lockVault);
 els.importVaultInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) importEncryptedVault(file);
+  event.target.value = "";
+});
+els.verifyBackupInput?.addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  if (file) verifyBackupFile(file);
   event.target.value = "";
 });
 

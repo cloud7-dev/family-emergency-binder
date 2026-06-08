@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.7 MVP.
+- v0.8 MVP.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
@@ -16,6 +16,7 @@ This project handles sensitive household metadata. Please report security issues
 - Attachment preview requires an unlocked vault.
 - Trusted and full-vault attachment previews require an explicit reveal click.
 - Import replacement is guarded by a backup-first prompt when an existing vault is present.
+- Backup verification decrypts a selected vault file without replacing the current vault.
 - Import validates attachment base64 decoding, decoded size matching, per-file size, decoded total size, filename length, non-empty IDs/names, and supported metadata before replacing the current vault.
 - Schema v3 stores `attachments[].checksumSha256`; migration computes it from decoded bytes and rejects mismatches when a checksum is present.
 - Attachment download filenames are normalized before being passed to the browser download API.
@@ -53,6 +54,7 @@ This project handles sensitive household metadata. Please report security issues
 - v2 vaults migrate to v3 with `records[].fields` and `attachments[].checksumSha256`.
 - Structured fields are saved, edited, searched, reviewed, and rendered as text.
 - Edit cancel leaves the current vault unchanged.
+- Wrong-passphrase backup verification leaves the current vault unchanged.
 - Safe-to-print packet output excludes trusted/secret structured fields.
 - XSS-like record, structured field, and TXT preview payloads are rendered as text, not HTML.
 
