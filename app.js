@@ -42,6 +42,11 @@ const translations = {
     vaultStatusLocked: "Create or unlock a vault to start.",
     vaultStatusUnlocked: "Local vault is open in this browser.",
     readinessCopyShort: "Complete the core household categories.",
+    readinessCounts: "Review status",
+    readinessCountsCopy: "Missing, needs review, ready to print.",
+    missingCount: "Missing",
+    needsReviewCount: "Needs review",
+    readyToPrintCount: "Ready to print",
     nextActions: "Next actions",
     recentRecords: "Recent records",
     nextActionLocked: "Open a local vault before adding records.",
@@ -103,6 +108,32 @@ const translations = {
     attachmentDownloaded: "Attachment downloaded.",
     attachmentRemoved: "Attachment removed.",
     recordDeleted: "Record deleted.",
+    markReviewed: "Mark reviewed",
+    reviewedMarked: "Record review date updated.",
+    lastReviewed: "Last reviewed",
+    notReviewed: "Not reviewed",
+    expired: "Expired",
+    needsAttention: "Needs attention",
+    structuredDetails: "Structured details",
+    documentType: "Document type",
+    location: "Location",
+    owner: "Owner",
+    expiryDate: "Expiry date",
+    provider: "Provider",
+    conditionOrAllergy: "Condition or allergy",
+    medication: "Medication",
+    emergencyNote: "Emergency note",
+    policyType: "Policy type",
+    policyNumberHint: "Policy number hint",
+    claimPhone: "Claim phone",
+    name: "Name",
+    relationship: "Relationship",
+    contactHint: "Contact hint",
+    priority: "Priority",
+    service: "Service",
+    recoveryLocation: "Recovery location",
+    trustedPerson: "Trusted person",
+    note: "Note",
     brokenAttachment: "Attachment data is missing or corrupted.",
     fileTooLarge: "File is too large. Limit is 5MB per file.",
     vaultTooLarge: "Vault attachments are too large. Limit is 20MB total.",
@@ -173,6 +204,11 @@ const translations = {
     vaultStatusLocked: "시작하려면 vault를 생성하거나 여세요.",
     vaultStatusUnlocked: "로컬 vault가 이 브라우저에서 열려 있습니다.",
     readinessCopyShort: "핵심 가정 카테고리를 완료하세요.",
+    readinessCounts: "검토 상태",
+    readinessCountsCopy: "누락, 검토 필요, 출력 가능.",
+    missingCount: "누락",
+    needsReviewCount: "검토 필요",
+    readyToPrintCount: "출력 가능",
     nextActions: "다음 작업",
     recentRecords: "최근 기록",
     nextActionLocked: "기록을 추가하기 전에 로컬 vault를 여세요.",
@@ -234,6 +270,32 @@ const translations = {
     attachmentDownloaded: "첨부파일을 다운로드했습니다.",
     attachmentRemoved: "첨부파일을 제거했습니다.",
     recordDeleted: "기록을 삭제했습니다.",
+    markReviewed: "검토 완료 표시",
+    reviewedMarked: "기록 검토 날짜를 업데이트했습니다.",
+    lastReviewed: "마지막 검토",
+    notReviewed: "검토 기록 없음",
+    expired: "만료됨",
+    needsAttention: "확인 필요",
+    structuredDetails: "구조화 상세 정보",
+    documentType: "문서 종류",
+    location: "위치",
+    owner: "담당자",
+    expiryDate: "만료일",
+    provider: "기관/제공자",
+    conditionOrAllergy: "질환 또는 알레르기",
+    medication: "복용약",
+    emergencyNote: "비상 메모",
+    policyType: "보험 종류",
+    policyNumberHint: "증권번호 힌트",
+    claimPhone: "청구 연락처",
+    name: "이름",
+    relationship: "관계",
+    contactHint: "연락처 힌트",
+    priority: "우선순위",
+    service: "서비스",
+    recoveryLocation: "복구 위치",
+    trustedPerson: "신뢰할 사람",
+    note: "메모",
     brokenAttachment: "첨부파일 데이터가 없거나 손상되었습니다.",
     fileTooLarge: "파일이 너무 큽니다. 파일당 5MB까지 가능합니다.",
     vaultTooLarge: "vault 첨부파일이 너무 큽니다. 전체 20MB까지 가능합니다.",
@@ -677,6 +739,46 @@ translations.hi = {
 };
 
 const categoryKeys = ["documents", "medical", "insurance", "contacts", "recovery"];
+const structuredFieldDefinitions = {
+  documents: [
+    ["documentType", "documentType"],
+    ["location", "location"],
+    ["owner", "owner"],
+    ["expiryDate", "expiryDate", "date"],
+  ],
+  medical: [
+    ["provider", "provider"],
+    ["conditionOrAllergy", "conditionOrAllergy"],
+    ["medication", "medication"],
+    ["emergencyNote", "emergencyNote"],
+  ],
+  insurance: [
+    ["provider", "provider"],
+    ["policyType", "policyType"],
+    ["policyNumberHint", "policyNumberHint"],
+    ["claimPhone", "claimPhone"],
+    ["expiryDate", "expiryDate", "date"],
+  ],
+  contacts: [
+    ["name", "name"],
+    ["relationship", "relationship"],
+    ["contactHint", "contactHint"],
+    ["priority", "priority"],
+  ],
+  recovery: [
+    ["service", "service"],
+    ["recoveryLocation", "recoveryLocation"],
+    ["trustedPerson", "trustedPerson"],
+    ["note", "note"],
+  ],
+};
+const categoryRequiredFields = {
+  documents: [["title"], ["detail", "location"]],
+  medical: [["provider", "emergencyNote"]],
+  insurance: [["provider"], ["policyType"]],
+  contacts: [["name"], ["relationship"], ["contactHint"]],
+  recovery: [["service"], ["recoveryLocation"]],
+};
 const checklistKeys = [
   "checklistDocuments",
   "checklistMedical",
@@ -692,6 +794,7 @@ const maxAttachmentBytes = 5 * 1024 * 1024;
 const maxTotalAttachmentBytes = 20 * 1024 * 1024;
 const maxAttachmentNameLength = 160;
 const maxPreviewTextBytes = 64 * 1024;
+const reviewStaleDays = 90;
 const allowedAttachmentTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]);
 const allowedAttachmentExtensions = new Set(["pdf", "png", "jpg", "jpeg", "webp", "txt"]);
 
@@ -722,6 +825,7 @@ const els = {
   progressFill: document.querySelector("#progressFill"),
   recordForm: document.querySelector("#recordForm"),
   recordCategory: document.querySelector("#recordCategory"),
+  recordDetails: document.querySelector("#recordDetails"),
   recordTitle: document.querySelector("#recordTitle"),
   recordDetail: document.querySelector("#recordDetail"),
   recordAttachment: document.querySelector("#recordAttachment"),
@@ -741,6 +845,8 @@ const els = {
   dashboardVaultCopy: document.querySelector("#dashboardVaultCopy"),
   dashboardReadiness: document.querySelector("#dashboardReadiness"),
   dashboardReadinessCopy: document.querySelector("#dashboardReadinessCopy"),
+  dashboardReviewCounts: document.querySelector("#dashboardReviewCounts"),
+  dashboardReviewCopy: document.querySelector("#dashboardReviewCopy"),
   dashboardNextAction: document.querySelector("#dashboardNextAction"),
   dashboardNextActionCopy: document.querySelector("#dashboardNextActionCopy"),
   dashboardRecentRecords: document.querySelector("#dashboardRecentRecords"),
@@ -761,6 +867,7 @@ function applyTranslations() {
   });
   renderVaultState();
   renderCategoryOptions();
+  renderRecordDetailsForm();
   renderRecordFilterOptions();
   renderChecklist();
   renderRecords();
@@ -791,6 +898,27 @@ function renderCategoryOptions() {
     option.value = key;
     option.textContent = t(key);
     els.recordCategory.append(option);
+  });
+}
+
+function renderRecordDetailsForm() {
+  if (!els.recordDetails) return;
+  const category = els.recordCategory.value || "documents";
+  els.recordDetails.innerHTML = "";
+  const title = document.createElement("strong");
+  title.textContent = t("structuredDetails");
+  els.recordDetails.append(title);
+  (structuredFieldDefinitions[category] || []).forEach(([key, labelKey, type = "text"]) => {
+    const label = document.createElement("label");
+    label.className = "field";
+    const span = document.createElement("span");
+    span.textContent = t(labelKey);
+    const input = document.createElement("input");
+    input.type = type;
+    input.dataset.fieldKey = key;
+    input.autocomplete = "off";
+    label.append(span, input);
+    els.recordDetails.append(label);
   });
 }
 
@@ -861,6 +989,13 @@ function demoVault() {
         title: "Passport and birth certificate originals",
         detail: "Fireproof box, shelf 2, blue folder",
         sensitivity: "trusted",
+        fields: {
+          documentType: "Identity documents",
+          location: "Fireproof box, shelf 2",
+          owner: "Parents",
+          expiryDate: "2028-05-10",
+          lastReviewedAt: new Date().toISOString(),
+        },
       },
       {
         id: crypto.randomUUID(),
@@ -869,6 +1004,13 @@ function demoVault() {
         detail: "Seoul Central Hospital. Penicillin allergy. Medication list in kitchen drawer.",
         sensitivity: "safe",
         attachmentIds: [demoAttachmentId],
+        fields: {
+          provider: "Seoul Central Hospital",
+          conditionOrAllergy: "Penicillin allergy",
+          medication: "Medication list in kitchen drawer",
+          emergencyNote: "Share allergy note before treatment",
+          lastReviewedAt: new Date().toISOString(),
+        },
       },
       {
         id: crypto.randomUUID(),
@@ -876,6 +1018,13 @@ function demoVault() {
         title: "Health insurance card",
         detail: "Wallet scan attached later. Policy number should stay redacted in print packet.",
         sensitivity: "trusted",
+        fields: {
+          provider: "Family health insurer",
+          policyType: "Health",
+          policyNumberHint: "Card scan only; no full number here",
+          claimPhone: "Claims desk number in wallet copy",
+          expiryDate: "2024-01-01",
+        },
       },
       {
         id: crypto.randomUUID(),
@@ -884,6 +1033,12 @@ function demoVault() {
         detail: "Hardware key is in the small black case. Do not store seed phrases here.",
         sensitivity: "secret",
         attachmentIds: [],
+        fields: {
+          service: "Password manager",
+          recoveryLocation: "Small black case",
+          trustedPerson: "Spouse",
+          note: "Do not store seed phrases here",
+        },
       },
     ],
     attachments: [
@@ -1026,6 +1181,7 @@ function renderChecklist() {
   const sourceVault = vault || defaultVault();
   els.checklist.innerHTML = "";
   checklistKeys.forEach((key) => {
+    const category = key.replace("checklist", "").toLowerCase();
     const card = document.createElement("article");
     card.className = "checklist-item";
     const title = document.createElement("strong");
@@ -1037,8 +1193,8 @@ function renderChecklist() {
       option.textContent = t(status);
       select.append(option);
     });
-    select.value = sourceVault.checklist[key] || "missing";
-    select.disabled = !vault;
+    select.value = vault ? getCategoryReadinessStatus(category) : sourceVault.checklist[key] || "missing";
+    select.disabled = true;
     select.addEventListener("change", () => {
       if (!vault) return;
       vault.checklist[key] = select.value;
@@ -1059,18 +1215,24 @@ function updateReadiness() {
 }
 
 function calculateReadinessScore() {
-  const values = Object.values(vault?.checklist || {});
-  const complete = values.filter((value) => value === "complete").length;
-  return values.length ? Math.round((complete / values.length) * 100) : 0;
+  const summary = getReadinessSummary();
+  return categoryKeys.length ? Math.round((summary.completeCategories / categoryKeys.length) * 100) : 0;
 }
 
 function renderDashboard() {
   if (!els.dashboardVaultStatus) return;
   const score = calculateReadinessScore();
+  const summary = getReadinessSummary();
   els.dashboardVaultStatus.textContent = isUnlocked ? t("unlocked") : t("locked");
   els.dashboardVaultCopy.textContent = isUnlocked ? t("vaultStatusUnlocked") : t("vaultStatusLocked");
   els.dashboardReadiness.textContent = `${score}%`;
   els.dashboardReadinessCopy.textContent = t("readinessCopyShort");
+  if (els.dashboardReviewCounts) {
+    els.dashboardReviewCounts.textContent = `${summary.missingCategories} / ${summary.needsReviewRecords} / ${summary.readyToPrintRecords}`;
+  }
+  if (els.dashboardReviewCopy) {
+    els.dashboardReviewCopy.textContent = `${t("missingCount")}, ${t("needsReviewCount")}, ${t("readyToPrintCount")}.`;
+  }
 
   if (!isUnlocked) {
     els.dashboardNextAction.textContent = t("navVault");
@@ -1078,7 +1240,7 @@ function renderDashboard() {
   } else if (!vault.records.length) {
     els.dashboardNextAction.textContent = t("addRecord");
     els.dashboardNextActionCopy.textContent = t("nextActionAddRecords");
-  } else if (score < 100) {
+  } else if (summary.missingCategories || summary.needsReviewRecords) {
     els.dashboardNextAction.textContent = t("checklistTitle");
     els.dashboardNextActionCopy.textContent = t("nextActionChecklist");
   } else {
@@ -1101,6 +1263,54 @@ function renderDashboard() {
   });
 }
 
+function getReadinessSummary() {
+  const records = vault?.records || [];
+  const categoryStatuses = Object.fromEntries(categoryKeys.map((category) => [category, getCategoryReadinessStatus(category)]));
+  return {
+    completeCategories: Object.values(categoryStatuses).filter((status) => status === "complete").length,
+    missingCategories: Object.values(categoryStatuses).filter((status) => status === "missing").length,
+    needsReviewRecords: records.filter((record) => getRecordReviewStatus(record) !== "complete").length,
+    readyToPrintRecords: records.filter((record) => record.sensitivity === "safe").length,
+    categoryStatuses,
+  };
+}
+
+function getCategoryReadinessStatus(category) {
+  const records = (vault?.records || []).filter((record) => record.category === category);
+  if (!records.length) return "missing";
+  const completeRecords = records.filter(isRecordRequiredFieldsComplete);
+  if (!completeRecords.length) return "review";
+  if (completeRecords.some(isRecordExpired)) return "stale";
+  if (completeRecords.some((record) => getRecordReviewStatus(record) !== "complete")) return "review";
+  return "complete";
+}
+
+function isRecordRequiredFieldsComplete(record) {
+  const requirements = categoryRequiredFields[record.category] || [["title"], ["detail"]];
+  return requirements.every((alternatives) => alternatives.some((field) => Boolean(getRecordFieldValue(record, field))));
+}
+
+function getRecordFieldValue(record, field) {
+  if (field === "title") return String(record.title || "").trim();
+  if (field === "detail") return String(record.detail || "").trim();
+  return String(record.fields?.[field] || "").trim();
+}
+
+function getRecordReviewStatus(record) {
+  if (isRecordExpired(record)) return "stale";
+  const reviewedAt = Date.parse(record.fields?.lastReviewedAt || "");
+  if (!reviewedAt) return "review";
+  const ageMs = Date.now() - reviewedAt;
+  return ageMs > reviewStaleDays * 24 * 60 * 60 * 1000 ? "review" : "complete";
+}
+
+function isRecordExpired(record) {
+  const expiry = record.fields?.expiryDate;
+  if (!expiry || !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) return false;
+  const expiryDate = new Date(`${expiry}T23:59:59`);
+  return Number.isFinite(expiryDate.getTime()) && expiryDate.getTime() < Date.now();
+}
+
 function renderRecords() {
   revokePreviewObjectUrls();
   els.recordList.innerHTML = "";
@@ -1114,9 +1324,10 @@ function renderRecords() {
   const template = document.querySelector("#recordTemplate");
   const search = recordSearch.trim().toLowerCase();
   const filteredRecords = vault.records.filter((record) => {
+    const fieldValues = Object.values(record.fields || {}).join(" ");
     const matchesSearch =
       !search ||
-      [record.title, record.detail, t(record.category)]
+      [record.title, record.detail, t(record.category), fieldValues]
         .join(" ")
         .toLowerCase()
         .includes(search);
@@ -1136,6 +1347,14 @@ function renderRecords() {
     card.querySelector(".record-category").textContent = t(record.category);
     card.querySelector("h3").textContent = record.title;
     card.querySelector("p").textContent = record.detail;
+    renderFieldSummary(card.querySelector(".field-summary"), record);
+    const reviewButton = card.querySelector(".mark-reviewed-button");
+    reviewButton.textContent = t("markReviewed");
+    reviewButton.addEventListener("click", () => markRecordReviewed(record.id));
+    const reviewStatus = getRecordReviewStatus(record);
+    const reviewBadge = card.querySelector(".review-status");
+    reviewBadge.className = `review-status ${reviewStatus}`;
+    reviewBadge.textContent = getRecordReviewLabel(record);
     const deleteButton = card.querySelector(".delete-record-button");
     deleteButton.textContent = t("deleteRecord");
     deleteButton.addEventListener("click", () => deleteRecord(record.id));
@@ -1192,6 +1411,44 @@ function renderRecords() {
     els.recordList.append(card);
   });
   renderDashboard();
+}
+
+function renderFieldSummary(container, record) {
+  if (!container) return;
+  container.innerHTML = "";
+  const visibleFields = getVisibleRecordFields(record);
+  if (!visibleFields.length) return;
+  visibleFields.forEach(([key, value]) => {
+    const item = document.createElement("div");
+    item.className = "field-summary-item";
+    const label = document.createElement("span");
+    label.textContent = getStructuredFieldLabel(record.category, key);
+    const content = document.createElement("strong");
+    content.textContent = value;
+    item.append(label, content);
+    container.append(item);
+  });
+}
+
+function getVisibleRecordFields(record) {
+  const fields = record.fields || {};
+  return (structuredFieldDefinitions[record.category] || [])
+    .map(([key]) => [key, String(fields[key] || "").trim()])
+    .filter(([, value]) => value)
+    .filter(([key]) => record.sensitivity === "safe" || !["policyNumberHint", "contactHint", "recoveryLocation"].includes(key));
+}
+
+function getStructuredFieldLabel(category, fieldKey) {
+  const definition = (structuredFieldDefinitions[category] || []).find(([key]) => key === fieldKey);
+  return definition ? t(definition[1]) : fieldKey;
+}
+
+function getRecordReviewLabel(record) {
+  if (isRecordExpired(record)) return t("expired");
+  const reviewedAt = record.fields?.lastReviewedAt;
+  if (!reviewedAt) return t("notReviewed");
+  if (getRecordReviewStatus(record) !== "complete") return t("review");
+  return t("complete");
 }
 
 function revokePreviewObjectUrls() {
@@ -1375,6 +1632,16 @@ async function readSelectedAttachments(redaction) {
   return attachments;
 }
 
+function readStructuredFields() {
+  const fields = {};
+  els.recordDetails?.querySelectorAll("[data-field-key]").forEach((input) => {
+    const key = input.dataset.fieldKey;
+    const value = input.value.trim();
+    if (key && value) fields[key] = value;
+  });
+  return normalizeRecordFields(fields);
+}
+
 function canDownloadAttachment(attachment) {
   return Boolean(attachment?.name && attachment?.type && attachment?.dataBase64 && isValidAttachment(attachment));
 }
@@ -1510,6 +1777,7 @@ function deleteRecord(recordId) {
   vault.records = vault.records.filter((record) => record.id !== recordId);
   pruneUnreferencedAttachments();
   touchVault();
+  renderChecklist();
   renderRecords();
   renderExportPreview();
   toast(t("recordDeleted"));
@@ -1634,19 +1902,32 @@ function buildEmergencyPacket() {
     "",
     ...printable.map((record) => {
       const attachments = getRecordAttachments(record);
+      const fieldLines = buildSafeFieldLines(record);
       const attachmentLines = attachments.length
         ? `\n  ${t("attachmentSummary")}: ${attachments
             .map((attachment) => `${attachment.name} (${formatBytes(attachment.size)}, ${t("attachmentHidden")})`)
             .join("; ")}`
         : "";
-      return `- ${t(record.category)}: ${record.title}\n  ${record.detail}${attachmentLines}`;
+      return `- ${t(record.category)}: ${record.title}\n  ${record.detail}${fieldLines}${attachmentLines}`;
     }),
   ];
   return lines.join("\n");
 }
 
+function buildSafeFieldLines(record) {
+  if (record.sensitivity !== "safe") return "";
+  const fields = getVisibleRecordFields(record);
+  if (!fields.length) return "";
+  return fields.map(([key, value]) => `\n  ${getStructuredFieldLabel(record.category, key)}: ${value}`).join("");
+}
+
 function buildRecoveryWorksheet() {
   const name = vault?.familyName || t("appName");
+  const summary = getReadinessSummary();
+  const categorySummary = categoryKeys.map((category) => `${t(category)}: ${t(summary.categoryStatuses[category])}`);
+  const reviewSummary = (vault?.records || [])
+    .filter((record) => getRecordReviewStatus(record) !== "complete")
+    .map((record) => `- ${t(record.category)}: ${record.title} (${getRecordReviewLabel(record)})`);
   return [
     `ReadyBinder recovery worksheet: ${name}`,
     "",
@@ -1665,6 +1946,14 @@ function buildRecoveryWorksheet() {
     `Last local save: ${formatDate(vault?.backup?.lastSavedAt)}`,
     `Last vault download: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
     `Last recovery test: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
+    "",
+    "Readiness summary:",
+    "",
+    ...categorySummary,
+    "",
+    "Records needing attention:",
+    "",
+    ...(reviewSummary.length ? reviewSummary : ["none"]),
     "",
     `Attachment metadata count: ${(vault?.attachments || []).length}`,
   ].join("\n");
@@ -1710,6 +1999,26 @@ function markRecoveryTest() {
   toast(t("recoveryTestMarked"));
 }
 
+function markRecordReviewed(recordId) {
+  if (!vault) return;
+  vault.records = vault.records.map((record) =>
+    record.id === recordId
+      ? {
+          ...record,
+          fields: {
+            ...(record.fields || {}),
+            lastReviewedAt: new Date().toISOString(),
+          },
+        }
+      : record,
+  );
+  touchVault();
+  renderChecklist();
+  renderRecords();
+  renderExportPreview();
+  toast(t("reviewedMarked"));
+}
+
 function printPacket() {
   if (!vault) return;
   window.print();
@@ -1751,6 +2060,7 @@ function setupNavigation() {
 }
 
 function setupRecordFilters() {
+  els.recordCategory?.addEventListener("change", renderRecordDetailsForm);
   els.recordSearch?.addEventListener("input", () => {
     recordSearch = els.recordSearch.value;
     renderRecords();
@@ -1804,6 +2114,7 @@ els.recordForm.addEventListener("submit", async (event) => {
   try {
     const sensitivity = els.recordSensitivity.value;
     const attachments = await readSelectedAttachments(sensitivity);
+    const fields = readStructuredFields();
     vault.attachments.push(...attachments);
     vault.records.unshift({
       id: crypto.randomUUID(),
@@ -1812,11 +2123,13 @@ els.recordForm.addEventListener("submit", async (event) => {
       detail,
       sensitivity,
       attachmentIds: attachments.map((attachment) => attachment.id),
-      fields: {},
+      fields,
     });
     vault.updatedAt = new Date().toISOString();
     els.recordForm.reset();
     renderCategoryOptions();
+    renderRecordDetailsForm();
+    renderChecklist();
     renderRecords();
     renderExportPreview();
   } catch (error) {

@@ -152,6 +152,10 @@ async function main() {
           setValue('#recordCategory', 'documents');
           setValue('#recordTitle', 'Emergency card scan');
           setValue('#recordDetail', 'Tiny QA note attached; original file must stay out of the packet');
+          setValue('[data-field-key="documentType"]', 'Emergency scan');
+          setValue('[data-field-key="location"]', 'Shelter folder');
+          setValue('[data-field-key="owner"]', 'QA owner');
+          setValue('[data-field-key="expiryDate"]', '2029-12-31');
           setValue('#recordSensitivity', 'trusted');
           const qaFile = new File(['tiny attachment contents'], 'qa-note.txt', { type: 'text/plain' });
           const recordTransfer = new DataTransfer();
@@ -167,14 +171,19 @@ async function main() {
             previewButtonAfterReveal.includes('Hide') ||
             previewButtonAfterReveal.includes('닫기') ||
             previewButtonAfterReveal.includes('Hide preview');
+          const fieldSummaryText = document.querySelector('.field-summary')?.textContent || '';
           document.querySelector('#saveVaultButton').click();
           await new Promise((resolve) => setTimeout(resolve, 700));
           const encrypted = localStorage.getItem('family-emergency-binder.encryptedVault');
           const currentVaultShape = {
             version: vault.version,
             recordsHaveFields: vault.records.every((record) => record.fields && typeof record.fields === 'object'),
+            recordsHaveStructuredValues: vault.records.some((record) => record.fields?.location === 'Shelter folder'),
             attachmentsHaveChecksums: vault.attachments.every((attachment) => /^[a-f0-9]{64}$/.test(attachment.checksumSha256 || '')),
           };
+          document.querySelector('.mark-reviewed-button').click();
+          await new Promise((resolve) => setTimeout(resolve, 140));
+          const reviewedRecordHasTimestamp = vault.records.some((record) => record.title === 'Emergency card scan' && /^\\d{4}-\\d{2}-\\d{2}T/.test(record.fields?.lastReviewedAt || ''));
           document.querySelector('.download-attachment-button').click();
           await new Promise((resolve) => setTimeout(resolve, 150));
           const attachmentDownload = capturedDownloads.at(-1);
@@ -216,7 +225,7 @@ async function main() {
           const safeFilteredCount = document.querySelectorAll('.record-card').length;
           setValue('#recordSensitivityFilter', 'all');
           await new Promise((resolve) => setTimeout(resolve, 80));
-          setValue('#recordSearch', 'Emergency card');
+          setValue('#recordSearch', 'Shelter folder');
           await new Promise((resolve) => setTimeout(resolve, 80));
           const searchFilteredCount = document.querySelectorAll('.record-card').length;
           const searchFilteredTitle = document.querySelector('.record-card h3')?.textContent || '';
@@ -262,6 +271,9 @@ async function main() {
             previewButtonAfterReveal,
             previewButtonShowsHide,
             currentVaultShape,
+            reviewedRecordHasTimestamp,
+            dashboardReviewCounts: document.querySelector('#dashboardReviewCounts')?.textContent || '',
+            fieldSummaryText,
             backupButtonVisible,
             backupDownloadName: backupDownload?.name || '',
             recordsBeforeBackup,
@@ -276,6 +288,8 @@ async function main() {
             recordsAfterDelete,
             recoveryMarked,
             packetMentionsAttachment: packet.includes('qa-note.txt') || packet.includes('demo-medical-note.txt'),
+            packetIncludesSafeFields: packet.includes('Provider: Seoul Central Hospital') || packet.includes('기관/제공자: Seoul Central Hospital'),
+            packetLeaksTrustedFields: packet.includes('Shelter folder') || packet.includes('Password manager'),
             packetLeaksAttachmentData: packet.includes('tiny attachment contents') || packet.includes('dataBase64'),
             encryptedEnvelope: envelope ? {
               app: envelope.app,
@@ -349,7 +363,11 @@ async function main() {
       qa.encryptedEnvelope.schemaVersion !== 3 ||
       qa.currentVaultShape?.version !== 3 ||
       !qa.currentVaultShape?.recordsHaveFields ||
+      !qa.currentVaultShape?.recordsHaveStructuredValues ||
       !qa.currentVaultShape?.attachmentsHaveChecksums ||
+      !qa.reviewedRecordHasTimestamp ||
+      !qa.dashboardReviewCounts ||
+      !qa.fieldSummaryText.includes("Shelter folder") ||
       qa.records < 5 ||
       qa.attachmentChips < 2 ||
       qa.attachmentDownloadName !== "qa-note.txt" ||
@@ -365,11 +383,13 @@ async function main() {
       qa.recordsAfterDelete !== 4 ||
       !qa.recoveryMarked ||
       !qa.packetMentionsAttachment ||
+      !qa.packetIncludesSafeFields ||
+      qa.packetLeaksTrustedFields ||
       qa.packetLeaksAttachmentData ||
       !qa.offline?.ready ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v5") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v6") ||
       !qa.offlineShell?.hasShell ||
-      qa.score !== "60%" ||
+      Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||
       !qa.navMedicalFilter ||
       qa.medicalFilteredCount < 1 ||

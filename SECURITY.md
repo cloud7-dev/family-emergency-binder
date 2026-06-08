@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.5 MVP.
+- v0.6 MVP.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
@@ -19,7 +19,9 @@ This project handles sensitive household metadata. Please report security issues
 - Import validates attachment base64 decoding, decoded size matching, per-file size, decoded total size, filename length, non-empty IDs/names, and supported metadata before replacing the current vault.
 - Schema v3 stores `attachments[].checksumSha256`; migration computes it from decoded bytes and rejects mismatches when a checksum is present.
 - Attachment download filenames are normalized before being passed to the browser download API.
+- Structured fields are rendered as text, contribute to readiness, and can contain sensitive household metadata.
 - Redacted emergency packets must not include raw attachment bytes, preview text, Blob URLs, checksum values, or `dataBase64`.
+- Redacted emergency packets include structured fields only for safe-to-print records.
 
 ## Preview threat model / 미리보기 위협 모델
 
@@ -29,7 +31,14 @@ This project handles sensitive household metadata. Please report security issues
 - SVG preview is intentionally unsupported.
 - PDF preview depends on browser support and may fall back to download/open guidance.
 
-## v0.4 test scope / v0.4 테스트 범위
+## Structured field threat model / 구조화 필드 위협 모델
+
+- Structured fields must render with text APIs, never HTML insertion.
+- Policy numbers, account identifiers, contact details, and recovery locations should be stored as hints unless the user intentionally trusts the full vault audience.
+- Trusted and full-vault-only records must not leak structured fields into the safe-to-print packet.
+- Review status and expiry dates are local helper signals, not legal, medical, or insurance advice.
+
+## v0.6 test scope / v0.6 테스트 범위
 
 `npm run security:test` currently checks:
 
@@ -41,7 +50,9 @@ This project handles sensitive household metadata. Please report security issues
 - Unsafe download filenames are normalized.
 - Encrypted import with invalid attachment metadata does not replace the current vault.
 - v2 vaults migrate to v3 with `records[].fields` and `attachments[].checksumSha256`.
-- XSS-like record and TXT preview payloads are rendered as text, not HTML.
+- Structured fields are saved, searched, reviewed, and rendered as text.
+- Safe-to-print packet output excludes trusted/secret structured fields.
+- XSS-like record, structured field, and TXT preview payloads are rendered as text, not HTML.
 
 This test scope is not a replacement for a professional cryptography or browser security audit.
 
@@ -60,6 +71,7 @@ This test scope is not a replacement for a professional cryptography or browser 
 - XSS hardening.
 - Decrypted data lifetime.
 - Export redaction.
+- Structured field redaction.
 - Clipboard behavior.
 - Service worker cache scope.
 - Attachment restore and deletion hardening.

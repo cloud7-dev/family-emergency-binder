@@ -24,6 +24,12 @@ const requiredStrings = [
   "checksumSha256",
   "sha256Hex",
   "renderAttachmentPreview",
+  "structuredFieldDefinitions",
+  "categoryRequiredFields",
+  "readStructuredFields",
+  "markRecordReviewed",
+  "getReadinessSummary",
+  "lastReviewedAt",
   "activePreviewAttachmentId",
   "revealedPreviewIds",
   "previewObjectUrls",
@@ -72,6 +78,8 @@ for (const id of [
   "downloadCurrentBackupButton",
   "printPacketButton",
   "recordAttachment",
+  "recordDetails",
+  "mark-reviewed-button",
   "recordSearch",
   "recordCategoryFilter",
   "recordSensitivityFilter",
@@ -92,9 +100,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.5.0") failures.push("Package version must be 0.5.0");
+if (pkg.version !== "0.6.0") failures.push("Package version must be 0.6.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v5")) failures.push("Service worker cache must be v5");
+if (!sw.includes("family-emergency-binder-v6")) failures.push("Service worker cache must be v6");
 
 if (failures.length) {
   console.error(failures.join("\n"));

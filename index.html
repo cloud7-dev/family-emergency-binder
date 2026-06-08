@@ -10,7 +10,7 @@
     />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=9" />
+    <link rel="stylesheet" href="./styles.css?v=10" />
   </head>
   <body>
     <div class="app-shell">
@@ -74,6 +74,11 @@
             <span class="dashboard-label" data-i18n="readiness">Readiness</span>
             <strong id="dashboardReadiness">0%</strong>
             <p id="dashboardReadinessCopy" data-i18n="readinessCopyShort">Complete the core household categories.</p>
+          </article>
+          <article class="dashboard-card">
+            <span class="dashboard-label" data-i18n="readinessCounts">Review status</span>
+            <strong id="dashboardReviewCounts">0 / 0 / 0</strong>
+            <p id="dashboardReviewCopy" data-i18n="readinessCountsCopy">Missing, needs review, ready to print.</p>
           </article>
           <article class="dashboard-card">
             <span class="dashboard-label" data-i18n="nextActions">Next actions</span>
@@ -211,6 +216,7 @@
               <span data-i18n="attachments">Attachments</span>
               <input id="recordAttachment" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf,image/png,image/jpeg,image/webp,text/plain" />
             </label>
+            <div id="recordDetails" class="record-details wide" aria-live="polite"></div>
             <button class="button primary" type="submit" data-i18n="addRecord">Add record</button>
           </form>
           <p class="form-hint" data-i18n="attachmentLimits">
@@ -262,9 +268,14 @@
           <span class="record-category"></span>
           <h3></h3>
           <p></p>
+          <div class="field-summary"></div>
         </div>
         <div class="record-actions">
+          <span class="review-status"></span>
           <span class="record-sensitivity"></span>
+          <button class="button secondary small mark-reviewed-button" type="button" data-i18n="markReviewed">
+            Mark reviewed
+          </button>
           <button class="button danger small delete-record-button" type="button" data-i18n="deleteRecord">
             Delete record
           </button>
@@ -272,6 +283,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=9"></script>
+    <script src="./app.js?v=10"></script>
   </body>
 </html>

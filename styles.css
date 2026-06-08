@@ -217,7 +217,7 @@ p {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -468,6 +468,22 @@ button:focus-visible {
   align-items: end;
 }
 
+.record-details {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.record-details > strong {
+  grid-column: 1 / -1;
+  font-size: 13px;
+}
+
 .record-tools {
   display: grid;
   grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 0.8fr) minmax(150px, 0.8fr);
@@ -507,6 +523,63 @@ button:focus-visible {
 .record-card p {
   margin-top: 4px;
   font-size: 14px;
+}
+
+.field-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.field-summary-item {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.field-summary-item span,
+.field-summary-item strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.field-summary-item span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.field-summary-item strong {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.review-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-status.complete {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.review-status.stale {
+  background: #fff0f0;
+  color: var(--danger);
 }
 
 .attachment-list {
@@ -712,7 +785,8 @@ button:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .record-form .wide {
+  .record-form .wide,
+  .record-details {
     grid-column: span 2;
   }
 
@@ -745,7 +819,9 @@ button:focus-visible {
   .form-grid,
   .dashboard-grid,
   .record-tools,
-  .record-form {
+  .record-form,
+  .record-details,
+  .field-summary {
     grid-template-columns: 1fr;
   }
 

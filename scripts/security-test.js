@@ -202,6 +202,7 @@ async function main() {
 
           setValue('#recordTitle', '<img src=x onerror=window.__xss=1>');
           setValue('#recordDetail', '<script>window.__xss=1<\\/script>');
+          setValue('[data-field-key="location"]', '<svg onload=window.__fieldXss=1>');
           const xssFile = new File(['<script>window.__previewXss=1<\\/script>'], 'xss.txt', { type: 'text/plain' });
           const xssTransfer = new DataTransfer();
           xssTransfer.items.add(xssFile);
@@ -212,9 +213,12 @@ async function main() {
           await new Promise((resolve) => setTimeout(resolve, 220));
           const xssTextOnly =
             window.__xss !== 1 &&
+            window.__fieldXss !== 1 &&
             window.__previewXss !== 1 &&
             document.querySelector('.record-card h3').textContent.includes('<img') &&
             !document.querySelector('.record-card h3 img') &&
+            document.querySelector('.field-summary').textContent.includes('<svg') &&
+            !document.querySelector('.field-summary svg') &&
             document.querySelector('.attachment-preview').textContent.includes('<script>') &&
             !document.querySelector('.attachment-preview script');
 
@@ -250,7 +254,9 @@ async function main() {
 
           const packetRedacted =
             !document.querySelector('#exportPreview').textContent.includes('dataBase64') &&
-            !document.querySelector('#exportPreview').textContent.includes(baseAttachment.dataBase64);
+            !document.querySelector('#exportPreview').textContent.includes(baseAttachment.dataBase64) &&
+            !document.querySelector('#exportPreview').textContent.includes('Small black case') &&
+            !document.querySelector('#exportPreview').textContent.includes('Password manager');
 
           return {
             title: document.title,
