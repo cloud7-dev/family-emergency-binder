@@ -2,7 +2,7 @@
 
 This project is designed around a local-first default: no account, no server upload, and encrypted vault export.
 
-Current release-candidate caveats:
+Current v1.0 caveats:
 
 - The current browser implementation uses PBKDF2 and AES-GCM through WebCrypto.
 - It has not received a security audit.

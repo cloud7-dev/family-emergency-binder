@@ -1,8 +1,8 @@
 # ReadyBinder / Family Emergency Binder
 
-ReadyBinder is a local-first emergency vault for organizing the critical information your family may need in an emergency without creating an account or uploading sensitive household data to a server. It keeps the repo/package slug `family-emergency-binder` for compatibility, while the product name is now ReadyBinder.
+ReadyBinder is a local-first encrypted emergency vault for families who need one offline place to organize emergency documents, medical notes, insurance references, contacts, account recovery hints, and small attachments without uploading private household data to a server.
 
-ReadyBinder는 위기 상황에서 가족에게 필요한 핵심 정보를 계정 생성이나 서버 업로드 없이 로컬 암호화 vault로 정리하는 오픈소스 도구입니다. 제품명은 ReadyBinder이고, Family Emergency Binder는 설명형 카테고리명으로 사용합니다.
+ReadyBinder는 비상 문서, 의료 메모, 보험 참고 정보, 연락처, 계정 복구 힌트, 작은 첨부파일을 서버 업로드 없이 하나의 오프라인 암호화 vault로 정리하는 가족용 오픈소스 도구입니다. repo/package slug는 호환성을 위해 `family-emergency-binder`를 유지합니다.
 
 ## What It Does / 주요 기능
 
@@ -49,7 +49,7 @@ Schema v3 keeps the v2 record and attachment fields, then adds structured record
 
 ## Structured records and readiness / 구조화 기록과 준비도
 
-v0.6 uses structured fields to calculate readiness instead of relying only on manual checklist status. / v0.6은 수동 체크리스트 상태만 보지 않고 구조화 필드를 기준으로 준비도를 계산합니다.
+ReadyBinder uses structured fields to calculate readiness instead of relying only on manual checklist status. / ReadyBinder는 수동 체크리스트 상태만 보지 않고 구조화 필드를 기준으로 준비도를 계산합니다.
 
 - Documents need a title plus a detail or location.
 - Medical records need a provider or emergency note.
@@ -94,7 +94,7 @@ node scripts/qa-headless.js --mobile
 npm run security:test
 ```
 
-## Verified flows / 검증된 흐름
+## v1.0 supported flows / v1.0 지원 흐름
 
 - Create or unlock a local vault, seed demo data, add TXT attachment, save encrypted locally, lock, and import again.
 - Add structured category fields, search by those fields, and mark a record reviewed.
@@ -106,14 +106,14 @@ npm run security:test
 - Verify a downloaded encrypted backup without replacing the current vault.
 - Reject wrong-passphrase import without replacing the current vault.
 - Search records, filter by category, filter by sensitivity, and use sidebar category navigation.
-- Render offline app shell from service worker cache `family-emergency-binder-v9`.
+- Render offline app shell from service worker cache `family-emergency-binder-v10`.
 - Keep redacted packet output free of attachment raw data and `dataBase64`.
 
-## Known limitations / 알려진 제한
+## v1.0 limitations / v1.0 제한
 
-- This MVP has not had an external security audit.
+- This v1.0 release has not had an external security audit.
 - Attachments are stored as base64 inside one encrypted vault JSON, so this is not designed for large files.
-- Drag-and-drop, bulk ZIP export, Argon2id, cloud sync, OCR, external audit, and repo rename are out of v0.9 scope.
+- Cloud sync, OCR, ZIP export, Argon2id, external audit, large-file vaults, drag-and-drop, and repo rename are unsupported in v1.0.
 - PDF preview depends on browser support and can fall back to download/open behavior.
 - Browser local storage and downloads are still the user's backup responsibility.
 
@@ -129,7 +129,7 @@ The app keeps UI strings in `app.js` and currently supports `ko`, `en`, `ja`, `z
 
 ## Security Model / 보안 모델
 
-This is an early MVP, not a security-audited vault. Do not enter real secrets yet. / 이 버전은 초기 MVP이며 보안 감사를 마친 vault가 아닙니다. 아직 실제 민감정보를 입력하지 마세요.
+This is a stable local-first v1.0 release, but not a security-audited vault. Avoid catastrophic secrets. / 이 버전은 local-first v1.0 안정 릴리즈이지만 보안 감사를 마친 vault는 아닙니다. 치명적인 원문 secret 저장은 피하세요.
 
 Current defaults:
 
@@ -150,10 +150,9 @@ See [SECURITY.md](./SECURITY.md), [docs/en/security.md](./docs/en/security.md), 
 ## Roadmap / 로드맵
 
 - Argon2id support where practical / 가능한 환경에서 Argon2id 지원
-- v1.0 stable release packaging / v1.0 안정 릴리즈 패키징
 - Optional backup-before-migrate export copy / 선택형 migration 전 백업 사본
 - Translation contribution files and glossary / 번역 기여 파일과 용어집
-- Accessibility pass for all supported languages / 지원 언어 전체 접근성 점검
+- Accessibility refinements for all supported languages / 지원 언어 전체 접근성 개선
 - External security review / 외부 보안 리뷰
 
 ## GitHub Topics / 추천 토픽

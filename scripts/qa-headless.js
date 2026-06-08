@@ -462,7 +462,7 @@ async function main() {
       !qa.offline?.ready ||
       !qa.verifySuccess ||
       !qa.verifyWrongPreservedVault ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v9") ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v10") ||
       !qa.offlineShell?.hasShell ||
       Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||

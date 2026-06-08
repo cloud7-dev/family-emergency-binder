@@ -60,7 +60,7 @@ const requiredStrings = [
   "maxTotalAttachmentBytes = 20 * 1024 * 1024",
   "maxAttachmentNameLength = 160",
 ];
-const requiredFiles = ["index.html", "styles.css", "app.js", "sw.js", "manifest.webmanifest", "README.md", "LICENSE"];
+const requiredFiles = ["index.html", "styles.css", "app.js", "sw.js", "manifest.webmanifest", "README.md", "SECURITY.md", "CONTRIBUTING.md", "RELEASE_NOTES.md", "LICENSE"];
 
 const failures = [];
 
@@ -111,9 +111,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "0.9.0") failures.push("Package version must be 0.9.0");
+if (pkg.version !== "1.0.0") failures.push("Package version must be 1.0.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v9")) failures.push("Service worker cache must be v9");
+if (!sw.includes("family-emergency-binder-v10")) failures.push("Service worker cache must be v10");
 
 const unsafeInnerHtmlWrites = [...app.matchAll(/innerHTML\s*=\s*([^;\n]+)/g)]
   .map((match) => match[0])

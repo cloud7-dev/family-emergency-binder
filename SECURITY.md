@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v0.9 release candidate.
+- v1.0 stable local-first release.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
