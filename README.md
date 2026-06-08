@@ -94,7 +94,7 @@ node scripts/qa-headless.js --mobile
 npm run security:test
 ```
 
-## v1.0 supported flows / v1.0 지원 흐름
+## v1.1 supported flows / v1.1 지원 흐름
 
 - Create or unlock a local vault, seed demo data, add TXT attachment, save encrypted locally, lock, and import again.
 - Add structured category fields, search by those fields, and mark a record reviewed.
@@ -106,14 +106,16 @@ npm run security:test
 - Verify a downloaded encrypted backup without replacing the current vault.
 - Reject wrong-passphrase import without replacing the current vault.
 - Search records, filter by category, filter by sensitivity, and use sidebar category navigation.
-- Render offline app shell from service worker cache `family-emergency-binder-v10`.
+- Mark review reminder dates and show stale reminder alerts.
+- Detect duplicate attachment groups by checksum and show warnings in dashboard/recovery views.
+- Render offline app shell from service worker cache `family-emergency-binder-v11`.
 - Keep redacted packet output free of attachment raw data and `dataBase64`.
 
-## v1.0 limitations / v1.0 제한
+## v1.1 limitations / v1.1 제한
 
-- This v1.0 release has not had an external security audit.
+- This v1.1 release has not had an external security audit.
 - Attachments are stored as base64 inside one encrypted vault JSON, so this is not designed for large files.
-- Cloud sync, OCR, ZIP export, Argon2id, external audit, large-file vaults, drag-and-drop, and repo rename are unsupported in v1.0.
+- Cloud sync, OCR, ZIP export, Argon2id, external audit, large-file vaults, drag-and-drop, and repo rename are unsupported in v1.1.
 - PDF preview depends on browser support and can fall back to download/open behavior.
 - Browser local storage and downloads are still the user's backup responsibility.
 
@@ -129,7 +131,7 @@ The app keeps UI strings in `app.js` and currently supports `ko`, `en`, `ja`, `z
 
 ## Security Model / 보안 모델
 
-This is a stable local-first v1.0 release, but not a security-audited vault. Avoid catastrophic secrets. / 이 버전은 local-first v1.0 안정 릴리즈이지만 보안 감사를 마친 vault는 아닙니다. 치명적인 원문 secret 저장은 피하세요.
+This is a stable local-first v1.1 release, but not a security-audited vault. Avoid catastrophic secrets. / 이 버전은 local-first v1.1 안정 릴리즈이지만 보안 감사를 마친 vault는 아닙니다. 치명적인 원문 secret 저장은 피하세요.
 
 Current defaults:
 

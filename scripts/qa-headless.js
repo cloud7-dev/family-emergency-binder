@@ -171,6 +171,9 @@ async function main() {
             previewButtonAfterReveal.includes('Hide') ||
             previewButtonAfterReveal.includes('닫기') ||
             previewButtonAfterReveal.includes('Hide preview');
+          document.querySelector('#markReviewReminderButton')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const reviewReminderSet = /^\\d{4}-\\d{2}-\\d{2}T/.test(vault.backup?.lastReviewReminderAt || '');
           const fieldSummaryText = document.querySelector('.field-summary')?.textContent || '';
           document.querySelector('.edit-record-button').click();
           await new Promise((resolve) => setTimeout(resolve, 120));
@@ -334,6 +337,7 @@ async function main() {
             verifySuccess,
             verifyWrongPreservedVault,
             reviewedRecordHasTimestamp,
+            reviewReminderSet,
             cancelKeptOriginalTitle,
             editSaved,
             dashboardReviewCounts: document.querySelector('#dashboardReviewCounts')?.textContent || '',
@@ -418,6 +422,9 @@ async function main() {
     const screenshot = await send("Page.captureScreenshot", { format: "png", fromSurface: true });
     fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
     ws.close();
+    if (!result.result || result.exceptionDetails) {
+      throw new Error(`QA runtime failed: ${JSON.stringify(result.exceptionDetails || result, null, 2)}`);
+    }
     const qa = result.result?.value;
     qa.offline = offlineResult.result?.value;
     qa.offlineShell = offlineShell.result?.value;
@@ -462,7 +469,8 @@ async function main() {
       !qa.offline?.ready ||
       !qa.verifySuccess ||
       !qa.verifyWrongPreservedVault ||
-      !qa.offline.cacheNames?.includes("family-emergency-binder-v10") ||
+      !qa.reviewReminderSet ||
+      !qa.offline.cacheNames?.includes("family-emergency-binder-v11") ||
       !qa.offlineShell?.hasShell ||
       Number.parseInt(qa.score, 10) < 20 ||
       qa.title !== "ReadyBinder" ||

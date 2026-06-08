@@ -6,7 +6,7 @@ This project handles sensitive household metadata. Please report security issues
 
 ## Current status / 현재 상태
 
-- v1.0 stable local-first release.
+- v1.1 stable local-first release.
 - Not externally security audited.
 - Uses browser WebCrypto with PBKDF2-SHA256 and AES-GCM.
 - No server upload by default.
@@ -41,11 +41,13 @@ This project handles sensitive household metadata. Please report security issues
 - Trusted and full-vault-only records must not leak structured fields into the safe-to-print packet.
 - Review status and expiry dates are local helper signals, not legal, medical, or insurance advice.
 
-## v0.9 hardening checklist / v0.9 강화 체크리스트
+## v1.1 hardening checklist / v1.1 강화 체크리스트
 
 - User-controlled record, field, attachment, and preview data must not be rendered through non-empty `innerHTML` writes.
 - Encrypted envelopes are validated before being written to browser storage.
 - Lock clears edit state, preview state, and backup verification summary.
+- Review reminders are tracked in `vault.backup.lastReviewReminderAt` and become visible in dashboard and backup checks.
+- Duplicate attachment detection is surfaced by checksum and includes the duplicate summary lines in vault summaries.
 - Import, verify, and decrypt failures use generic messages and must not echo sensitive vault contents.
 - Static and browser QA checks cover accessible control names, live export preview, focusable backup summary, desktop/mobile overflow, and offline shell cache.
 

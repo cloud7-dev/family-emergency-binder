@@ -59,6 +59,16 @@ const requiredStrings = [
   "maxAttachmentBytes = 5 * 1024 * 1024",
   "maxTotalAttachmentBytes = 20 * 1024 * 1024",
   "maxAttachmentNameLength = 160",
+  "markReviewReminder",
+  "markReviewReminderButton",
+  "reviewReminder",
+  "lastReviewReminder",
+  "isReviewReminderDue",
+  "getDuplicateAttachmentGroups",
+  "getDuplicateAttachmentSummary",
+  "reviewReminderDays = 30",
+  "lastReviewReminderAt",
+  "Duplicate attachment groups",
 ];
 const requiredFiles = ["index.html", "styles.css", "app.js", "sw.js", "manifest.webmanifest", "README.md", "SECURITY.md", "CONTRIBUTING.md", "RELEASE_NOTES.md", "LICENSE"];
 
@@ -91,6 +101,7 @@ for (const id of [
   "recordDetails",
   "mark-reviewed-button",
   "edit-record-button",
+  "markReviewReminderButton",
   "recordSearch",
   "recordCategoryFilter",
   "recordSensitivityFilter",
@@ -111,9 +122,9 @@ if (!manifest.name || manifest.display !== "standalone") {
 }
 
 if (manifest.name !== "ReadyBinder") failures.push("Manifest name must be ReadyBinder");
-if (pkg.version !== "1.0.0") failures.push("Package version must be 1.0.0");
+if (pkg.version !== "1.1.0") failures.push("Package version must be 1.1.0");
 if (!pkg.scripts["security:test"]) failures.push("Missing security:test script");
-if (!sw.includes("family-emergency-binder-v10")) failures.push("Service worker cache must be v10");
+if (!sw.includes("family-emergency-binder-v11")) failures.push("Service worker cache must be v11");
 
 const unsafeInnerHtmlWrites = [...app.matchAll(/innerHTML\s*=\s*([^;\n]+)/g)]
   .map((match) => match[0])

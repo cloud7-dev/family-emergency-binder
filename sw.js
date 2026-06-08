@@ -1,11 +1,11 @@
-const CACHE_NAME = "family-emergency-binder-v10";
+const CACHE_NAME = "family-emergency-binder-v11";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
-  "./styles.css?v=14",
+  "./styles.css?v=15",
   "./app.js",
-  "./app.js?v=14",
+  "./app.js?v=15",
   "./manifest.webmanifest",
   "./favicon.svg",
 ];

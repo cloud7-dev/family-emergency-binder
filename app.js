@@ -44,9 +44,16 @@ const translations = {
     readinessCopyShort: "Complete the core household categories.",
     readinessCounts: "Review status",
     readinessCountsCopy: "Missing, needs review, ready to print.",
+    duplicateAttachmentSummary: "Duplicate attachment groups",
+    duplicateAttachment: "duplicate",
     missingCount: "Missing",
     needsReviewCount: "Needs review",
     readyToPrintCount: "Ready to print",
+    reviewReminder: "Review reminder",
+    markReviewReminder: "Mark review reminder",
+    reviewReminderMarked: "Review reminder date updated.",
+    reviewReminderPrompt: "Mark a review reminder to track periodic checks.",
+    lastReviewReminder: "Last review reminder",
     nextActions: "Next actions",
     recentRecords: "Recent records",
     nextActionLocked: "Open a local vault before adding records.",
@@ -220,9 +227,16 @@ const translations = {
     readinessCopyShort: "핵심 가정 카테고리를 완료하세요.",
     readinessCounts: "검토 상태",
     readinessCountsCopy: "누락, 검토 필요, 출력 가능.",
+    duplicateAttachmentSummary: "중복 첨부 파일 그룹",
+    duplicateAttachment: "중복",
     missingCount: "누락",
     needsReviewCount: "검토 필요",
     readyToPrintCount: "출력 가능",
+    reviewReminder: "검토 리마인더",
+    markReviewReminder: "검토 리마인더 표시",
+    reviewReminderMarked: "검토 리마인더 날짜를 업데이트했습니다.",
+    reviewReminderPrompt: "검토 리마인더를 눌러 정기 점검 기록을 남기세요.",
+    lastReviewReminder: "마지막 검토 리마인더",
     nextActions: "다음 작업",
     recentRecords: "최근 기록",
     nextActionLocked: "기록을 추가하기 전에 로컬 vault를 여세요.",
@@ -823,6 +837,7 @@ const maxTotalAttachmentBytes = 20 * 1024 * 1024;
 const maxAttachmentNameLength = 160;
 const maxPreviewTextBytes = 64 * 1024;
 const reviewStaleDays = 90;
+const reviewReminderDays = 30;
 const allowedAttachmentTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]);
 const allowedAttachmentExtensions = new Set(["pdf", "png", "jpg", "jpeg", "webp", "txt"]);
 
@@ -870,6 +885,7 @@ const els = {
   downloadPacketButton: document.querySelector("#downloadPacketButton"),
   downloadRecoveryButton: document.querySelector("#downloadRecoveryButton"),
   markRecoveryTestButton: document.querySelector("#markRecoveryTestButton"),
+  markReviewReminderButton: document.querySelector("#markReviewReminderButton"),
   downloadCurrentBackupButton: document.querySelector("#downloadCurrentBackupButton"),
   printPacketButton: document.querySelector("#printPacketButton"),
   navItems: document.querySelectorAll(".nav-item"),
@@ -998,6 +1014,7 @@ function defaultVault(familyName = "") {
       lastDownloadedAt: null,
       lastRecoveryTestAt: null,
       lastVerifiedAt: null,
+      lastReviewReminderAt: null,
     },
     updatedAt: new Date().toISOString(),
   };
@@ -1090,6 +1107,7 @@ function demoVault() {
       lastDownloadedAt: null,
       lastRecoveryTestAt: new Date().toISOString(),
       lastVerifiedAt: null,
+      lastReviewReminderAt: null,
     },
     updatedAt: new Date().toISOString(),
   };
@@ -1125,6 +1143,7 @@ async function migrateVaultSchema(input) {
       lastDownloadedAt: input.backup?.lastDownloadedAt || null,
       lastRecoveryTestAt: input.backup?.lastRecoveryTestAt || null,
       lastVerifiedAt: input.backup?.lastVerifiedAt || null,
+      lastReviewReminderAt: input.backup?.lastReviewReminderAt || null,
     },
     updatedAt: input.updatedAt || new Date().toISOString(),
   };
@@ -1259,6 +1278,7 @@ function renderDashboard() {
   if (!els.dashboardVaultStatus) return;
   const score = calculateReadinessScore();
   const summary = getReadinessSummary();
+  const needsReviewReminder = isReviewReminderDue();
   els.dashboardVaultStatus.textContent = isUnlocked ? t("unlocked") : t("locked");
   els.dashboardVaultCopy.textContent = isUnlocked ? t("vaultStatusUnlocked") : t("vaultStatusLocked");
   els.dashboardReadiness.textContent = `${score}%`;
@@ -1267,7 +1287,11 @@ function renderDashboard() {
     els.dashboardReviewCounts.textContent = `${summary.missingCategories} / ${summary.needsReviewRecords} / ${summary.readyToPrintRecords}`;
   }
   if (els.dashboardReviewCopy) {
-    els.dashboardReviewCopy.textContent = `${t("missingCount")}, ${t("needsReviewCount")}, ${t("readyToPrintCount")}.`;
+    const duplicateText =
+      summary.duplicateAttachmentGroups > 0
+        ? ` ${t("duplicateAttachmentSummary")}: ${summary.duplicateAttachmentGroups}.`
+        : "";
+    els.dashboardReviewCopy.textContent = `${t("missingCount")}, ${t("needsReviewCount")}, ${t("readyToPrintCount")}. ${duplicateText}`.trim();
   }
 
   if (!isUnlocked) {
@@ -1279,6 +1303,9 @@ function renderDashboard() {
   } else if (summary.missingCategories || summary.needsReviewRecords) {
     els.dashboardNextAction.textContent = t("checklistTitle");
     els.dashboardNextActionCopy.textContent = t("nextActionChecklist");
+  } else if (needsReviewReminder) {
+    els.dashboardNextAction.textContent = t("reviewReminder");
+    els.dashboardNextActionCopy.textContent = t("reviewReminderPrompt");
   } else {
     els.dashboardNextAction.textContent = t("exportTitle");
     els.dashboardNextActionCopy.textContent = t("nextActionBackup");
@@ -1302,11 +1329,13 @@ function renderDashboard() {
 function getReadinessSummary() {
   const records = vault?.records || [];
   const categoryStatuses = Object.fromEntries(categoryKeys.map((category) => [category, getCategoryReadinessStatus(category)]));
+  const duplicateAttachmentGroups = getDuplicateAttachmentGroups(vault?.attachments || []);
   return {
     completeCategories: Object.values(categoryStatuses).filter((status) => status === "complete").length,
     missingCategories: Object.values(categoryStatuses).filter((status) => status === "missing").length,
     needsReviewRecords: records.filter((record) => getRecordReviewStatus(record) !== "complete").length,
     readyToPrintRecords: records.filter((record) => record.sensitivity === "safe").length,
+    duplicateAttachmentGroups: duplicateAttachmentGroups.length,
     categoryStatuses,
   };
 }
@@ -1340,6 +1369,14 @@ function getRecordReviewStatus(record) {
   return ageMs > reviewStaleDays * 24 * 60 * 60 * 1000 ? "review" : "complete";
 }
 
+function isReviewReminderDue(vaultSnapshot = vault) {
+  if (!vaultSnapshot?.backup) return true;
+  const lastReminder = Date.parse(vaultSnapshot.backup.lastReviewReminderAt || "");
+  if (!Number.isFinite(lastReminder)) return true;
+  const thresholdMs = reviewReminderDays * 24 * 60 * 60 * 1000;
+  return Date.now() - lastReminder > thresholdMs;
+}
+
 function isRecordExpired(record) {
   const expiry = record.fields?.expiryDate;
   if (!expiry || !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) return false;
@@ -1350,6 +1387,7 @@ function isRecordExpired(record) {
 function renderRecords() {
   revokePreviewObjectUrls();
   els.recordList.innerHTML = "";
+  const duplicateAttachmentIds = new Set(getDuplicateAttachmentGroups(vault?.attachments || []).flat());
   if (!vault?.records?.length) {
     const empty = document.createElement("p");
     empty.textContent = t("emptyRecords");
@@ -1416,7 +1454,8 @@ function renderRecords() {
         chip.className = "attachment-chip";
         const label = document.createElement("span");
         label.className = "attachment-label";
-        label.textContent = `${attachment.name} (${formatBytes(attachment.size)})`;
+        const duplicateTag = duplicateAttachmentIds.has(attachment.id) ? ` (${t("duplicateAttachment")})` : "";
+        label.textContent = `${attachment.name} (${formatBytes(attachment.size)})${duplicateTag}`;
         const actions = document.createElement("span");
         actions.className = "attachment-actions";
         const previewButton = document.createElement("button");
@@ -1676,6 +1715,7 @@ function renderVaultState() {
   els.vaultStateBadge.classList.toggle("warning", !isUnlocked);
   els.vaultStateBadge.classList.toggle("ready", isUnlocked);
   if (els.markRecoveryTestButton) els.markRecoveryTestButton.disabled = !isUnlocked;
+  if (els.markReviewReminderButton) els.markReviewReminderButton.disabled = !isUnlocked;
   renderDashboard();
 }
 
@@ -1771,6 +1811,26 @@ function getRecordAttachments(record) {
 
 function getTotalAttachmentBytes(attachments = vault?.attachments || []) {
   return attachments.reduce((total, attachment) => total + (attachment.size || 0), 0);
+}
+
+function getDuplicateAttachmentGroups(attachments = vault?.attachments || []) {
+  const groups = new Map();
+  for (const attachment of attachments) {
+    if (!attachment) continue;
+    const key = attachment.checksumSha256 || `${normalizeAttachmentFilename(attachment.name)}|${attachment.size || 0}`;
+    const next = groups.get(key) || [];
+    next.push(attachment);
+    groups.set(key, next);
+  }
+  return [...groups.values()].filter((group) => group.length > 1);
+}
+
+function getDuplicateAttachmentSummary(attachments = vault?.attachments || []) {
+  const groups = getDuplicateAttachmentGroups(attachments);
+  return {
+    groups: groups.length,
+    attachments: groups.flat().length,
+  };
 }
 
 function getAttachmentById(attachmentId) {
@@ -2007,12 +2067,14 @@ function hasExistingVaultForImport() {
 }
 
 function buildImportPreview(importedVault, envelope) {
+  const duplicateSummary = getDuplicateAttachmentSummary(importedVault?.attachments || []);
   return [
     `${t("importPreview")}: ${importedVault.familyName || t("appName")}`,
     `Schema: ${envelope.schemaVersion || envelope.version || 1}`,
     `Updated: ${formatDate(importedVault.updatedAt)}`,
     `Records: ${(importedVault.records || []).length}`,
     `Attachments: ${(importedVault.attachments || []).length}`,
+    `Duplicate attachment groups: ${duplicateSummary.groups}`,
   ].join("\n");
 }
 
@@ -2027,12 +2089,14 @@ function renderImportAssistant() {
 function renderBackupCheck() {
   if (!els.backupStatus) return;
   const lines = [
+    `${t("lastReviewReminder")}: ${formatDate(vault?.backup?.lastReviewReminderAt)}`,
     `${t("lastVerified")}: ${formatDate(vault?.backup?.lastVerifiedAt)}`,
     `${t("saveLocal")}: ${formatDate(vault?.backup?.lastSavedAt)}`,
     `${t("downloadVault")}: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
     `${t("markRecoveryTest")}: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
     `${t("recordCount")}: ${(vault?.records || []).length}`,
     `${t("attachmentTotal")}: ${formatBytes(getTotalAttachmentBytes(vault?.attachments || []))}`,
+    `Duplicate attachment groups: ${getDuplicateAttachmentSummary(vault?.attachments || []).groups}`,
     `${t("currentSchema")}: ${vault?.version || vaultSchemaVersion}`,
   ];
   if (backupVerifySummary) lines.unshift(backupVerifySummary, "");
@@ -2040,12 +2104,14 @@ function renderBackupCheck() {
 }
 
 function buildBackupVerifySummary(importedVault, envelope) {
+  const duplicateSummary = getDuplicateAttachmentSummary(importedVault?.attachments || []);
   return [
     `${t("backupVerified")}`,
     `${importedVault.familyName || t("appName")}`,
     `Updated: ${formatDate(importedVault.updatedAt)}`,
     `${t("recordCount")}: ${(importedVault.records || []).length}`,
     `Attachments: ${(importedVault.attachments || []).length}`,
+    `Duplicate attachment groups: ${duplicateSummary.groups}`,
     `Schema: ${envelope.schemaVersion || envelope.version || 1}`,
   ].join("\n");
 }
@@ -2063,7 +2129,11 @@ async function verifyBackupFile(file) {
     const decrypted = await decryptVault(envelope, passphrase);
     backupVerifySummary = buildBackupVerifySummary(decrypted, envelope);
     if (vault) {
-      vault.backup = { ...(vault.backup || {}), lastVerifiedAt: new Date().toISOString() };
+      vault.backup = {
+        ...(vault.backup || {}),
+        lastVerifiedAt: new Date().toISOString(),
+        lastReviewReminderAt: vault.backup?.lastReviewReminderAt || null,
+      };
       touchVault();
     }
     renderBackupCheck();
@@ -2166,6 +2236,7 @@ function buildSafeFieldLines(record) {
 function buildRecoveryWorksheet() {
   const name = vault?.familyName || t("appName");
   const summary = getReadinessSummary();
+  const duplicateSummary = getDuplicateAttachmentSummary(vault?.attachments || []);
   const categorySummary = categoryKeys.map((category) => `${t(category)}: ${t(summary.categoryStatuses[category])}`);
   const reviewSummary = (vault?.records || [])
     .filter((record) => getRecordReviewStatus(record) !== "complete")
@@ -2185,10 +2256,12 @@ function buildRecoveryWorksheet() {
     "Last backup/test dates:",
     "",
     `Last vault update: ${formatDate(vault?.updatedAt)}`,
+    `Last review reminder: ${formatDate(vault?.backup?.lastReviewReminderAt)}`,
     `Last local save: ${formatDate(vault?.backup?.lastSavedAt)}`,
     `Last vault download: ${formatDate(vault?.backup?.lastDownloadedAt)}`,
     `Last recovery test: ${formatDate(vault?.backup?.lastRecoveryTestAt)}`,
     `Last backup verification: ${formatDate(vault?.backup?.lastVerifiedAt)}`,
+    `Duplicate attachment groups: ${duplicateSummary.groups} (${duplicateSummary.attachments} files)`,
     "",
     "Readiness summary:",
     "",
@@ -2240,6 +2313,14 @@ function markRecoveryTest() {
   touchVault();
   renderExportPreview();
   toast(t("recoveryTestMarked"));
+}
+
+function markReviewReminder() {
+  if (!vault) return;
+  vault.backup = { ...(vault.backup || {}), lastReviewReminderAt: new Date().toISOString() };
+  touchVault();
+  renderExportPreview();
+  toast(t("reviewReminderMarked"));
 }
 
 function markRecordReviewed(recordId) {
@@ -2386,6 +2467,7 @@ els.downloadVaultButton.addEventListener("click", downloadEncrypted);
 els.downloadPacketButton.addEventListener("click", downloadPacket);
 els.downloadRecoveryButton.addEventListener("click", downloadRecoveryWorksheet);
 els.markRecoveryTestButton.addEventListener("click", markRecoveryTest);
+els.markReviewReminderButton.addEventListener("click", markReviewReminder);
 els.downloadCurrentBackupButton.addEventListener("click", downloadCurrentBackup);
 els.printPacketButton.addEventListener("click", printPacket);
 els.lockButton.addEventListener("click", lockVault);
